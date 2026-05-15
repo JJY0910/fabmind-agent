@@ -21,7 +21,7 @@ test.describe('Agent Analysis UI', () => {
 
     // 6. Verify Context
     await expect(page.locator('text=Situation Snapshot')).toBeVisible();
-    await expect(page.locator('text=DO_CLAMP_SOL')).toBeVisible();
+    await expect(page.getByText('DO_CLAMP_SOL', { exact: true }).first()).toBeVisible();
 
     // 7. Verify Agent Timeline
     await expect(page.locator('text=Agent Timeline')).toBeVisible();
