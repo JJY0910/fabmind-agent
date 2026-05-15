@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Clock, Activity, FileText, Microscope, ShieldAlert, Cpu } from "lucide-react";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
-      
+
       {/* Page Header */}
       <div className="flex flex-col gap-2 mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -29,7 +30,7 @@ export default function HomePage() {
             <p className="text-xs text-slate-400 mt-1">2 critical priority</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between space-y-0 pb-2">
@@ -69,7 +70,7 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
-        
+
         {/* Golden Path Section */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
@@ -81,54 +82,70 @@ export default function HomePage() {
               View All
             </button>
           </div>
-          
+
           <Card className="border-[#1a2c4d] overflow-hidden">
             <div className="divide-y divide-[#1a2c4d]">
               {[
                 { eq: 'LP-01', alarm: 'LP-CLAMP-014', time: '10 mins ago', status: 'Analysis Complete', risk: 'Low', color: 'text-[#00cc66]', desc: 'Clamp 완료 센서 위치 이탈' },
                 { eq: 'LP-02', alarm: 'ECAT-STATE-021', time: '1 hour ago', status: 'Pending Approval', risk: 'High', color: 'text-[#ffaa00]', desc: 'EtherCAT Slave PRE-OP 고착' },
                 { eq: 'FC-11', alarm: 'FC-INTERLOCK-03', time: '3 hours ago', status: 'Resolved', risk: 'Low', color: 'text-slate-500', desc: '도어 닫힘 상태 불량' },
-              ].map((item, i) => (
-                <div key={i} className="p-4 hover:bg-[#111d33] transition-colors flex items-center justify-between cursor-pointer group">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-white text-xs bg-[#1a2c4d] px-2 py-0.5 rounded border border-[#1a2c4d] group-hover:border-[#00e5ff]/30 transition-colors">{item.eq}</span>
-                      <span className="font-mono text-[#00e5ff] text-sm font-medium">{item.alarm}</span>
+              ].map((item, i) => {
+                const content = (
+                  <div className="p-4 hover:bg-[#111d33] transition-colors flex items-center justify-between group">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-white text-xs bg-[#1a2c4d] px-2 py-0.5 rounded border border-[#1a2c4d] group-hover:border-[#00e5ff]/30 transition-colors">{item.eq}</span>
+                        <span className="font-mono text-[#00e5ff] text-sm font-medium">{item.alarm}</span>
+                      </div>
+                      <span className="text-sm text-slate-300">{item.desc}</span>
                     </div>
-                    <span className="text-sm text-slate-300">{item.desc}</span>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`text-sm font-medium ${item.color}`}>
-                      {item.status}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-[10px] uppercase tracking-wider font-bold border px-2 py-0.5 rounded-full ${
-                        item.risk === 'High' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' : 
-                        'border-slate-700 text-slate-400 bg-slate-800/50'
-                      }`}>
-                        {item.risk} Risk
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`text-sm font-medium ${item.color}`}>
+                        {item.status}
                       </span>
-                      <span className="text-xs text-slate-500 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {item.time}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[10px] uppercase tracking-wider font-bold border px-2 py-0.5 rounded-full ${
+                          item.risk === 'High' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' :
+                          'border-slate-700 text-slate-400 bg-slate-800/50'
+                        }`}>
+                          {item.risk} Risk
+                        </span>
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {item.time}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+
+                if (item.eq === 'LP-01') {
+                  return (
+                    <Link key={i} href="/diagnosis-sessions/LP-01-SESSION" className="block outline-none focus:ring-2 focus:ring-[#00e5ff] rounded-t-lg">
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={i} className="cursor-pointer">
+                    {content}
+                  </div>
+                );
+              })}
             </div>
           </Card>
         </div>
 
         {/* Pending Approvals & Risk Summary */}
         <div className="space-y-6">
-          
+
           {/* Approvals */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-slate-400" />
               Required Actions
             </h2>
-            
+
             <Card className="border-[#ffaa00]/30 bg-[#ffaa00]/5 shadow-[0_0_15px_rgba(255,170,0,0.05)]">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm text-[#ffaa00] flex items-center gap-2">
