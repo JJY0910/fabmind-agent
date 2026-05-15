@@ -80,6 +80,10 @@ class AlarmCodeRead(BaseModel):
     recommended_first_check: str | None = None
 
 
+class AlarmCodeListResponse(BaseModel):
+    items: list[AlarmCodeRead]
+
+
 class IoPointRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -90,6 +94,10 @@ class IoPointRead(BaseModel):
     description: str
     normal_state: bool | None = None
     related_alarm_code: str | None = None
+
+
+class IoPointListResponse(BaseModel):
+    items: list[IoPointRead]
 
 
 class EthercatDeviceRead(BaseModel):
@@ -103,11 +111,23 @@ class EthercatDeviceRead(BaseModel):
     product_code: str | None = None
 
 
+class EthercatDeviceListResponse(BaseModel):
+    items: list[EthercatDeviceRead]
+
+
+class EvidenceRead(BaseModel):
+    id: str
+    type: str
+    title: str
+    content: str
+
+
 class EquipmentDetailResponse(BaseModel):
     equipment: EquipmentSummary
     alarms: list[AlarmCodeRead]
     io_points: list[IoPointRead]
     ethercat_devices: list[EthercatDeviceRead]
+    document_chunks: list[EvidenceRead] = []
 
 
 class AuditEventRead(BaseModel):
@@ -124,4 +144,3 @@ class AuditEventRead(BaseModel):
 
 class AuditEventListResponse(BaseModel):
     items: list[AuditEventRead]
-
