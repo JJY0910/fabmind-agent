@@ -1,3 +1,4 @@
+from app.schemas.auth import AuthUser, LoginRequest, LoginResponse, RoleCode
 from app.schemas.domain import (
     AlarmCodeRead,
     AuditEventListResponse,
@@ -17,6 +18,7 @@ from app.schemas.domain import (
 
 __all__ = [
     "AlarmCodeRead",
+    "AuthUser",
     "AuditEventListResponse",
     "AuditEventRead",
     "EquipmentDetailResponse",
@@ -26,7 +28,10 @@ __all__ = [
     "EthercatDeviceRead",
     "IoPointRead",
     "LineRead",
+    "LoginRequest",
+    "LoginResponse",
     "RoleRead",
+    "RoleCode",
     "SiteRead",
     "TenantRead",
     "UserRead",

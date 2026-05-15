@@ -36,6 +36,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/auth/me:
+    get:
+      summary: Current authenticated user
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401': { $ref: '#/components/responses/Unauthorized' }
   /api/v1/equipment:
     get:
       summary: List equipment
@@ -202,6 +214,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/AuditEvent'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 components:
   securitySchemes:
     bearerAuth:
@@ -216,6 +230,11 @@ components:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
     Forbidden:
       description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Unauthorized:
+      description: Unauthorized
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ErrorResponse' }
@@ -242,14 +261,17 @@ components:
       required: [access_token, user]
       properties:
         access_token: { type: string }
+        token_type: { type: string, enum: [bearer] }
         user: { $ref: '#/components/schemas/User' }
     User:
       type: object
-      required: [id, username, role]
+      required: [id, username, display_name, role, tenant_id]
       properties:
         id: { type: string }
         username: { type: string }
+        display_name: { type: string }
         role: { type: string, enum: [FIELD_ENGINEER, SENIOR_ENGINEER, ADMIN] }
+        tenant_id: { type: string }
     EquipmentSummary:
       type: object
       required: [id, code, name, family]

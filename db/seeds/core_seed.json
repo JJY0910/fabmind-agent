@@ -22,19 +22,19 @@
       "username": "field",
       "display_name": "Demo Field Engineer",
       "role_code": "FIELD_ENGINEER",
-      "password_hash": "local-demo-field-password-hash"
+      "password_hash": "pbkdf2_sha256$120000$field-demo-salt$HeTcOPc1o04rnGdkDXAJfZWxp8VVFubYZBTRGAqwA3I"
     },
     {
       "username": "senior",
       "display_name": "Demo Senior Engineer",
       "role_code": "SENIOR_ENGINEER",
-      "password_hash": "local-demo-senior-password-hash"
+      "password_hash": "pbkdf2_sha256$120000$senior-demo-salt$BmfTNDBEOaM-0Q1x-4XdKdSDsJFoRoOchIT3_ER1RdM"
     },
     {
       "username": "admin",
       "display_name": "Demo Administrator",
       "role_code": "ADMIN",
-      "password_hash": "local-demo-admin-password-hash"
+      "password_hash": "pbkdf2_sha256$120000$admin-demo-salt$Jvwau_iKLsRvKmhQgOSiEZhvmchbZHZF-9tNjtfHfBY"
     }
   ],
   "site": {
@@ -137,4 +137,3 @@
     }
   }
 }
-
