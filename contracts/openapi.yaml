@@ -135,6 +135,22 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/diagnosis-sessions:
+    get:
+      summary: List diagnosis sessions
+      responses:
+        '200':
+          description: Diagnosis session list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DiagnosisSession'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
     post:
       summary: Create diagnosis session
       requestBody:
@@ -150,6 +166,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DiagnosisSession'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/ValidationError' }
   /api/v1/diagnosis-sessions/{session_id}:
     get:
@@ -161,11 +179,13 @@ paths:
           schema: { type: string }
       responses:
         '200':
-          description: Session aggregate
+          description: Diagnosis session detail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DiagnosisSessionAggregate'
+                $ref: '#/components/schemas/DiagnosisSession'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/diagnosis-sessions/{session_id}/run-agent:
     post:
@@ -376,12 +396,18 @@ components:
         expected_state: { type: string, enum: [INIT, PRE_OP, SAFE_OP, OP] }
     CreateDiagnosisSessionRequest:
       type: object
-      required: [equipment_id, alarm_code, symptom_text, input_snapshot]
+      required: [equipment_id, alarm_code, symptom_summary]
       properties:
         equipment_id: { type: string }
         alarm_code: { type: string }
-        symptom_text: { type: string }
-        input_snapshot: { $ref: '#/components/schemas/SituationSnapshot' }
+        symptom_summary: { type: string }
+        log_excerpt: { type: string }
+        ethercat_state: { type: string, enum: [INIT, PRE_OP, SAFE_OP, OP, UNKNOWN] }
+        io_snapshot:
+          type: object
+          additionalProperties: { type: boolean }
+        recent_action: { type: string }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
     SituationSnapshot:
       type: object
       properties:
@@ -393,10 +419,24 @@ components:
         log_text: { type: string }
     DiagnosisSession:
       type: object
-      required: [id, status]
+      required: [id, tenant_id, equipment_id, created_by_user_id, alarm_code, symptom_summary, status, risk_level]
       properties:
         id: { type: string }
-        status: { type: string, enum: [CREATED, ANALYZING, COMPLETED, INSUFFICIENT_EVIDENCE, FAILED] }
+        tenant_id: { type: string }
+        equipment_id: { type: string }
+        created_by_user_id: { type: string }
+        alarm_code: { type: string }
+        symptom_summary: { type: string }
+        log_excerpt: { type: string }
+        ethercat_state: { type: string, enum: [INIT, PRE_OP, SAFE_OP, OP, UNKNOWN] }
+        io_snapshot:
+          type: object
+          additionalProperties: { type: boolean }
+        recent_action: { type: string }
+        status: { type: string, enum: [CREATED, ANALYZING, ANALYSIS_READY, INSUFFICIENT_EVIDENCE, CLOSED] }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
     DiagnosisSessionAggregate:
       type: object
       properties:

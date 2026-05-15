@@ -118,6 +118,7 @@ class Equipment(Base):
     family: Mapped[EquipmentFamily] = relationship(back_populates="equipment")
     io_points: Mapped[list["IoPoint"]] = relationship(back_populates="equipment")
     ethercat_devices: Mapped[list["EthercatDevice"]] = relationship(back_populates="equipment")
+    diagnosis_sessions: Mapped[list["DiagnosisSession"]] = relationship(back_populates="equipment")
 
 
 class AlarmCode(Base):
@@ -198,3 +199,38 @@ class AuditEvent(Base):
     payload: Mapped[dict[str, Any] | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
+
+class DiagnosisSession(Base):
+    __tablename__ = "diagnosis_sessions"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('CREATED','ANALYZING','ANALYSIS_READY','INSUFFICIENT_EVIDENCE','CLOSED')",
+            name="ck_diagnosis_sessions_status",
+        ),
+        CheckConstraint("risk_level IN ('LOW','MEDIUM','HIGH','CRITICAL')", name="ck_diagnosis_sessions_risk_level"),
+        Index("idx_diagnosis_sessions_tenant_equipment", "tenant_id", "equipment_id"),
+        Index("idx_diagnosis_sessions_tenant_created", "tenant_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    equipment_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("equipment.id"), nullable=False)
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
+    alarm_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    symptom_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    log_excerpt: Mapped[str | None] = mapped_column(Text)
+    ethercat_state: Mapped[str | None] = mapped_column(String(20))
+    io_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    recent_action: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="CREATED", server_default="CREATED")
+    risk_level: Mapped[str] = mapped_column(String(20), nullable=False, default="LOW", server_default="LOW")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    equipment: Mapped[Equipment] = relationship(back_populates="diagnosis_sessions")
+    created_by: Mapped[User] = relationship()
