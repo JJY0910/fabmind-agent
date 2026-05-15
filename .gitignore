@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+
+# Node
+node_modules/
+.next/
+playwright-report/
+test-results/
+
+# Env
+.env
+infra/.env
+
+# OS
+.DS_Store
+Thumbs.db

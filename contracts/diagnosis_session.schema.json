@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SituationSnapshot",
+  "type": "object",
+  "required": [
+    "equipment_code",
+    "alarm_code",
+    "symptom_text",
+    "ethercat_state",
+    "io_snapshot"
+  ],
+  "properties": {
+    "equipment_code": {
+      "type": "string"
+    },
+    "alarm_code": {
+      "type": "string"
+    },
+    "symptom_text": {
+      "type": "string"
+    },
+    "ethercat_state": {
+      "type": "string",
+      "enum": [
+        "INIT",
+        "PRE_OP",
+        "SAFE_OP",
+        "OP",
+        "UNKNOWN"
+      ]
+    },
+    "io_snapshot": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "recent_action": {
+      "type": "string"
+    },
+    "log_text": {
+      "type": "string"
+    }
+  }
+}

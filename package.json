@@ -1,0 +1,10 @@
+{
+  "name": "fabmind-agent-monorepo",
+  "private": true,
+  "scripts": {
+    "web:dev": "cd apps/web && npm run dev",
+    "web:typecheck": "cd apps/web && npm run typecheck",
+    "api:test": "cd apps/api && uv run pytest",
+    "quality": "bash quality/run_quality_gate.sh"
+  }
+}

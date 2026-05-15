@@ -1,0 +1,42 @@
+scorecard:
+  problem_definition:
+    weight: 10
+    must_have:
+      - clear semiconductor field problem
+      - security/equipment/safety constraints
+      - fixed Load Port / FOUP Clamp scope
+  architecture:
+    weight: 10
+    must_have:
+      - monorepo structure
+      - backend/frontend/db separated
+      - OpenAPI contract
+      - deterministic seed
+  agentic_ai:
+    weight: 10
+    must_have:
+      - deterministic agent workflow
+      - evidence linked hypotheses
+      - safety guardrail
+      - insufficient evidence behavior
+  ui_ux:
+    weight: 10
+    must_have:
+      - agent timeline
+      - evidence drawer
+      - risk banner
+      - all screen states
+  engineering_quality:
+    weight: 10
+    must_have:
+      - pytest
+      - Playwright
+      - GitHub Actions
+      - PR-based development
+  portfolio:
+    weight: 10
+    must_have:
+      - README
+      - screenshots
+      - demo script
+      - company-facing explanation

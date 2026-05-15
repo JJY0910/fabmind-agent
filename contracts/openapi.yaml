@@ -1,0 +1,406 @@
+openapi: 3.1.0
+info:
+  title: FabMind Agent API
+  version: 1.0.0
+  description: On-premise evidence-first troubleshooting API for Load Port / FOUP Clamp equipment.
+servers:
+  - url: http://localhost:8000
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/auth/login:
+    post:
+      summary: Demo login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+  /api/v1/equipment:
+    get:
+      summary: List equipment
+      responses:
+        '200':
+          description: Equipment list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EquipmentSummary'
+  /api/v1/equipment/{equipment_id}:
+    get:
+      summary: Get equipment detail aggregate
+      parameters:
+        - name: equipment_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Equipment detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentDetail'
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/diagnosis-sessions:
+    post:
+      summary: Create diagnosis session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDiagnosisSessionRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosisSession'
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api/v1/diagnosis-sessions/{session_id}:
+    get:
+      summary: Get diagnosis session aggregate
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Session aggregate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosisSessionAggregate'
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/diagnosis-sessions/{session_id}/run-agent:
+    post:
+      summary: Run deterministic agent
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Agent result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentRunResult'
+  /api/v1/reports:
+    post:
+      summary: Create report draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        '201':
+          description: Report draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+  /api/v1/reports/{report_id}/request-approval:
+    post:
+      summary: Request report approval
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Approval request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+  /api/v1/approval-requests/{approval_id}/approve:
+    post:
+      summary: Approve report
+      parameters:
+        - name: approval_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200': { description: Approved }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/approval-requests/{approval_id}/reject:
+    post:
+      summary: Reject report
+      parameters:
+        - name: approval_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecisionRequest'
+      responses:
+        '200': { description: Rejected }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/audit-events:
+    get:
+      summary: Search audit events
+      parameters:
+        - name: event_type
+          in: query
+          schema: { type: string }
+        - name: severity
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service]
+      properties:
+        status: { type: string, enum: [ok] }
+        service: { type: string }
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+    LoginResponse:
+      type: object
+      required: [access_token, user]
+      properties:
+        access_token: { type: string }
+        user: { $ref: '#/components/schemas/User' }
+    User:
+      type: object
+      required: [id, username, role]
+      properties:
+        id: { type: string }
+        username: { type: string }
+        role: { type: string, enum: [FIELD_ENGINEER, SENIOR_ENGINEER, ADMIN] }
+    EquipmentSummary:
+      type: object
+      required: [id, code, name, family]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        family: { type: string }
+        status: { type: string }
+    EquipmentDetail:
+      type: object
+      required: [equipment, alarms, io_points, ethercat_devices, document_chunks]
+      properties:
+        equipment: { $ref: '#/components/schemas/EquipmentSummary' }
+        alarms:
+          type: array
+          items: { $ref: '#/components/schemas/AlarmCode' }
+        io_points:
+          type: array
+          items: { $ref: '#/components/schemas/IoPoint' }
+        ethercat_devices:
+          type: array
+          items: { $ref: '#/components/schemas/EthercatDevice' }
+        document_chunks:
+          type: array
+          items: { $ref: '#/components/schemas/Evidence' }
+    AlarmCode:
+      type: object
+      required: [code, title, severity]
+      properties:
+        code: { type: string }
+        title: { type: string }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+    IoPoint:
+      type: object
+      required: [code, direction, description]
+      properties:
+        code: { type: string }
+        direction: { type: string, enum: [DI, DO] }
+        description: { type: string }
+    EthercatDevice:
+      type: object
+      required: [slave_no, name, expected_state]
+      properties:
+        slave_no: { type: integer }
+        name: { type: string }
+        expected_state: { type: string, enum: [INIT, PRE_OP, SAFE_OP, OP] }
+    CreateDiagnosisSessionRequest:
+      type: object
+      required: [equipment_id, alarm_code, symptom_text, input_snapshot]
+      properties:
+        equipment_id: { type: string }
+        alarm_code: { type: string }
+        symptom_text: { type: string }
+        input_snapshot: { $ref: '#/components/schemas/SituationSnapshot' }
+    SituationSnapshot:
+      type: object
+      properties:
+        ethercat_state: { type: string, enum: [INIT, PRE_OP, SAFE_OP, OP, UNKNOWN] }
+        io_snapshot:
+          type: object
+          additionalProperties: { type: boolean }
+        recent_action: { type: string }
+        log_text: { type: string }
+    DiagnosisSession:
+      type: object
+      required: [id, status]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [CREATED, ANALYZING, COMPLETED, INSUFFICIENT_EVIDENCE, FAILED] }
+    DiagnosisSessionAggregate:
+      type: object
+      properties:
+        session: { $ref: '#/components/schemas/DiagnosisSession' }
+        agent_run: { $ref: '#/components/schemas/AgentRunResult' }
+        report: { $ref: '#/components/schemas/Report' }
+    AgentRunResult:
+      type: object
+      required: [run_id, status, steps, hypotheses, evidence]
+      properties:
+        run_id: { type: string }
+        status: { type: string }
+        steps:
+          type: array
+          items: { $ref: '#/components/schemas/AgentStep' }
+        hypotheses:
+          type: array
+          items: { $ref: '#/components/schemas/Hypothesis' }
+        evidence:
+          type: array
+          items: { $ref: '#/components/schemas/Evidence' }
+        safety_result: { type: string }
+    AgentStep:
+      type: object
+      properties:
+        name: { type: string }
+        status: { type: string }
+        summary: { type: string }
+    Hypothesis:
+      type: object
+      required: [rank, title, confidence_band, evidence_ids]
+      properties:
+        rank: { type: integer }
+        title: { type: string }
+        reasoning: { type: string }
+        confidence_band: { type: string, enum: [HIGH, MEDIUM, LOW] }
+        evidence_ids:
+          type: array
+          items: { type: string }
+    Evidence:
+      type: object
+      required: [id, type, title, content]
+      properties:
+        id: { type: string }
+        type: { type: string }
+        title: { type: string }
+        content: { type: string }
+    CreateReportRequest:
+      type: object
+      required: [session_id]
+      properties:
+        session_id: { type: string }
+    Report:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [DRAFT, PENDING_APPROVAL, APPROVED, REJECTED] }
+        title: { type: string }
+        body: { type: string }
+    ApprovalRequest:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [PENDING, APPROVED, REJECTED] }
+    ApprovalDecisionRequest:
+      type: object
+      required: [comment]
+      properties:
+        comment: { type: string }
+    AuditEvent:
+      type: object
+      properties:
+        id: { type: string }
+        event_type: { type: string }
+        severity: { type: string }
+        created_at: { type: string, format: date-time }
+    ErrorResponse:
+      type: object
+      required: [error_code, message]
+      properties:
+        error_code: { type: string }
+        message: { type: string }
+        details: { type: object }
+        request_id: { type: string }

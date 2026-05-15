@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentRunResult",
+  "type": "object",
+  "required": [
+    "status",
+    "steps",
+    "hypotheses",
+    "evidence"
+  ],
+  "properties": {
+    "status": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "array"
+    },
+    "hypotheses": {
+      "type": "array"
+    },
+    "evidence": {
+      "type": "array"
+    },
+    "safety_result": {
+      "type": "string"
+    }
+  }
+}

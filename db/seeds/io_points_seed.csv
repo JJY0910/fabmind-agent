@@ -1,0 +1,61 @@
+code,equipment_code,direction,signal_type,description,normal_state,related_alarm
+DI_CLAMP_DONE,LP-01,DI,SENSOR,Clamp done sensor input,false,LP-CLAMP-014
+DO_CLAMP_SOL,LP-01,DO,ACTUATOR,Clamp solenoid output command,false,LP-CLAMP-014
+DI_FOUP_PRESENT,LP-01,DI,SENSOR,FOUP presence sensor,false,LP-PRESENCE-003
+DI_DOOR_CLOSED,LP-01,DI,SENSOR,Load port door closed sensor,true,LP-DOOR-007
+DI_MAP_HOME,LP-01,DI,SENSOR,Mapping arm home sensor,true,LP-MAP-019
+DI_LP_SIGNAL_06,LP-01,DI,SENSOR,Synthetic DI signal 06 for Load Port training and testing.,false,LP-DEMO-007
+DO_LP_SIGNAL_07,LP-01,DO,ACTUATOR,Synthetic DO signal 07 for Load Port training and testing.,false,LP-DEMO-008
+DI_LP_SIGNAL_08,LP-01,DI,SENSOR,Synthetic DI signal 08 for Load Port training and testing.,false,LP-DEMO-009
+DO_LP_SIGNAL_09,LP-01,DO,ACTUATOR,Synthetic DO signal 09 for Load Port training and testing.,false,LP-DEMO-010
+DI_LP_SIGNAL_10,LP-01,DI,SENSOR,Synthetic DI signal 10 for Load Port training and testing.,false,LP-DEMO-011
+DO_LP_SIGNAL_11,LP-01,DO,ACTUATOR,Synthetic DO signal 11 for Load Port training and testing.,false,LP-DEMO-012
+DI_LP_SIGNAL_12,LP-01,DI,SENSOR,Synthetic DI signal 12 for Load Port training and testing.,false,LP-DEMO-013
+DO_LP_SIGNAL_13,LP-01,DO,ACTUATOR,Synthetic DO signal 13 for Load Port training and testing.,false,LP-DEMO-014
+DI_LP_SIGNAL_14,LP-01,DI,SENSOR,Synthetic DI signal 14 for Load Port training and testing.,false,LP-DEMO-015
+DO_LP_SIGNAL_15,LP-01,DO,ACTUATOR,Synthetic DO signal 15 for Load Port training and testing.,false,LP-DEMO-016
+DI_LP_SIGNAL_16,LP-01,DI,SENSOR,Synthetic DI signal 16 for Load Port training and testing.,false,LP-DEMO-017
+DO_LP_SIGNAL_17,LP-01,DO,ACTUATOR,Synthetic DO signal 17 for Load Port training and testing.,false,LP-DEMO-018
+DI_LP_SIGNAL_18,LP-01,DI,SENSOR,Synthetic DI signal 18 for Load Port training and testing.,false,LP-DEMO-019
+DO_LP_SIGNAL_19,LP-01,DO,ACTUATOR,Synthetic DO signal 19 for Load Port training and testing.,false,LP-DEMO-020
+DI_LP_SIGNAL_20,LP-01,DI,SENSOR,Synthetic DI signal 20 for Load Port training and testing.,false,LP-DEMO-021
+DO_LP_SIGNAL_21,LP-01,DO,ACTUATOR,Synthetic DO signal 21 for Load Port training and testing.,false,LP-DEMO-022
+DI_LP_SIGNAL_22,LP-01,DI,SENSOR,Synthetic DI signal 22 for Load Port training and testing.,false,LP-DEMO-023
+DO_LP_SIGNAL_23,LP-01,DO,ACTUATOR,Synthetic DO signal 23 for Load Port training and testing.,false,LP-DEMO-024
+DI_LP_SIGNAL_24,LP-01,DI,SENSOR,Synthetic DI signal 24 for Load Port training and testing.,false,LP-DEMO-025
+DO_LP_SIGNAL_25,LP-01,DO,ACTUATOR,Synthetic DO signal 25 for Load Port training and testing.,false,LP-DEMO-026
+DI_LP_SIGNAL_26,LP-01,DI,SENSOR,Synthetic DI signal 26 for Load Port training and testing.,false,LP-DEMO-027
+DO_LP_SIGNAL_27,LP-01,DO,ACTUATOR,Synthetic DO signal 27 for Load Port training and testing.,false,LP-DEMO-028
+DI_LP_SIGNAL_28,LP-01,DI,SENSOR,Synthetic DI signal 28 for Load Port training and testing.,false,LP-DEMO-029
+DO_LP_SIGNAL_29,LP-01,DO,ACTUATOR,Synthetic DO signal 29 for Load Port training and testing.,false,LP-DEMO-030
+DI_LP_SIGNAL_30,LP-01,DI,SENSOR,Synthetic DI signal 30 for Load Port training and testing.,false,LP-CLAMP-014
+DO_LP_SIGNAL_31,LP-02,DO,ACTUATOR,Synthetic DO signal 31 for Load Port training and testing.,false,ECAT-STATE-021
+DI_LP_SIGNAL_32,LP-02,DI,SENSOR,Synthetic DI signal 32 for Load Port training and testing.,false,LP-DOOR-007
+DO_LP_SIGNAL_33,LP-02,DO,ACTUATOR,Synthetic DO signal 33 for Load Port training and testing.,false,LP-PRESENCE-003
+DI_LP_SIGNAL_34,LP-02,DI,SENSOR,Synthetic DI signal 34 for Load Port training and testing.,false,LP-MAP-019
+DO_LP_SIGNAL_35,LP-02,DO,ACTUATOR,Synthetic DO signal 35 for Load Port training and testing.,false,LP-DEMO-006
+DI_LP_SIGNAL_36,LP-02,DI,SENSOR,Synthetic DI signal 36 for Load Port training and testing.,false,LP-DEMO-007
+DO_LP_SIGNAL_37,LP-02,DO,ACTUATOR,Synthetic DO signal 37 for Load Port training and testing.,false,LP-DEMO-008
+DI_LP_SIGNAL_38,LP-02,DI,SENSOR,Synthetic DI signal 38 for Load Port training and testing.,false,LP-DEMO-009
+DO_LP_SIGNAL_39,LP-02,DO,ACTUATOR,Synthetic DO signal 39 for Load Port training and testing.,false,LP-DEMO-010
+DI_LP_SIGNAL_40,LP-02,DI,SENSOR,Synthetic DI signal 40 for Load Port training and testing.,false,LP-DEMO-011
+DO_LP_SIGNAL_41,LP-02,DO,ACTUATOR,Synthetic DO signal 41 for Load Port training and testing.,false,LP-DEMO-012
+DI_LP_SIGNAL_42,LP-02,DI,SENSOR,Synthetic DI signal 42 for Load Port training and testing.,false,LP-DEMO-013
+DO_LP_SIGNAL_43,LP-02,DO,ACTUATOR,Synthetic DO signal 43 for Load Port training and testing.,false,LP-DEMO-014
+DI_LP_SIGNAL_44,LP-02,DI,SENSOR,Synthetic DI signal 44 for Load Port training and testing.,false,LP-DEMO-015
+DO_LP_SIGNAL_45,LP-02,DO,ACTUATOR,Synthetic DO signal 45 for Load Port training and testing.,false,LP-DEMO-016
+DI_LP_SIGNAL_46,LP-02,DI,SENSOR,Synthetic DI signal 46 for Load Port training and testing.,false,LP-DEMO-017
+DO_LP_SIGNAL_47,LP-02,DO,ACTUATOR,Synthetic DO signal 47 for Load Port training and testing.,false,LP-DEMO-018
+DI_LP_SIGNAL_48,LP-02,DI,SENSOR,Synthetic DI signal 48 for Load Port training and testing.,false,LP-DEMO-019
+DO_LP_SIGNAL_49,LP-02,DO,ACTUATOR,Synthetic DO signal 49 for Load Port training and testing.,false,LP-DEMO-020
+DI_LP_SIGNAL_50,LP-02,DI,SENSOR,Synthetic DI signal 50 for Load Port training and testing.,false,LP-DEMO-021
+DO_LP_SIGNAL_51,LP-02,DO,ACTUATOR,Synthetic DO signal 51 for Load Port training and testing.,false,LP-DEMO-022
+DI_LP_SIGNAL_52,LP-02,DI,SENSOR,Synthetic DI signal 52 for Load Port training and testing.,false,LP-DEMO-023
+DO_LP_SIGNAL_53,LP-02,DO,ACTUATOR,Synthetic DO signal 53 for Load Port training and testing.,false,LP-DEMO-024
+DI_LP_SIGNAL_54,LP-02,DI,SENSOR,Synthetic DI signal 54 for Load Port training and testing.,false,LP-DEMO-025
+DO_LP_SIGNAL_55,LP-02,DO,ACTUATOR,Synthetic DO signal 55 for Load Port training and testing.,false,LP-DEMO-026
+DI_LP_SIGNAL_56,LP-02,DI,SENSOR,Synthetic DI signal 56 for Load Port training and testing.,false,LP-DEMO-027
+DO_LP_SIGNAL_57,LP-02,DO,ACTUATOR,Synthetic DO signal 57 for Load Port training and testing.,false,LP-DEMO-028
+DI_LP_SIGNAL_58,LP-02,DI,SENSOR,Synthetic DI signal 58 for Load Port training and testing.,false,LP-DEMO-029
+DO_LP_SIGNAL_59,LP-02,DO,ACTUATOR,Synthetic DO signal 59 for Load Port training and testing.,false,LP-DEMO-030
+DI_LP_SIGNAL_60,LP-02,DI,SENSOR,Synthetic DI signal 60 for Load Port training and testing.,false,LP-CLAMP-014
