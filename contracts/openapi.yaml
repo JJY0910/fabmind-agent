@@ -63,6 +63,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/EquipmentSummary'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/equipment/{equipment_id}:
     get:
       summary: Get equipment detail aggregate
@@ -78,7 +80,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EquipmentDetail'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/alarms:
+    get:
+      summary: List alarm codes
+      responses:
+        '200':
+          description: Alarm code list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AlarmCode'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/io-points:
+    get:
+      summary: List I/O points
+      responses:
+        '200':
+          description: I/O point list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IoPoint'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/ethercat-devices:
+    get:
+      summary: List EtherCAT devices
+      responses:
+        '200':
+          description: EtherCAT device list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EthercatDevice'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/diagnosis-sessions:
     post:
       summary: Create diagnosis session
