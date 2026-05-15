@@ -120,12 +120,17 @@ CREATE TABLE diagnosis_sessions (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
   equipment_id UUID NOT NULL REFERENCES equipment(id),
-  alarm_code TEXT,
-  symptom_text TEXT NOT NULL,
-  input_snapshot JSONB NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('CREATED','ANALYZING','COMPLETED','INSUFFICIENT_EVIDENCE','FAILED')) DEFAULT 'CREATED',
-  created_by UUID NOT NULL REFERENCES users(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_by_user_id UUID NOT NULL REFERENCES users(id),
+  alarm_code TEXT NOT NULL,
+  symptom_summary TEXT NOT NULL,
+  log_excerpt TEXT,
+  ethercat_state TEXT,
+  io_snapshot JSONB NOT NULL,
+  recent_action TEXT,
+  status TEXT NOT NULL CHECK (status IN ('CREATED','ANALYZING','ANALYSIS_READY','INSUFFICIENT_EVIDENCE','CLOSED')) DEFAULT 'CREATED',
+  risk_level TEXT NOT NULL CHECK (risk_level IN ('LOW','MEDIUM','HIGH','CRITICAL')) DEFAULT 'LOW',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE agent_runs (

@@ -1,6 +1,7 @@
 from app.models.domain import (
     AlarmCode,
     AuditEvent,
+    DiagnosisSession,
     Equipment,
     EquipmentFamily,
     EthercatDevice,
@@ -15,6 +16,7 @@ from app.models.domain import (
 __all__ = [
     "AlarmCode",
     "AuditEvent",
+    "DiagnosisSession",
     "Equipment",
     "EquipmentFamily",
     "EthercatDevice",

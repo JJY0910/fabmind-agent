@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TenantRead(BaseModel):
@@ -144,3 +144,42 @@ class AuditEventRead(BaseModel):
 
 class AuditEventListResponse(BaseModel):
     items: list[AuditEventRead]
+
+
+DiagnosisStatus = Literal["CREATED", "ANALYZING", "ANALYSIS_READY", "INSUFFICIENT_EVIDENCE", "CLOSED"]
+RiskLevel = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+EthercatState = Literal["INIT", "PRE_OP", "SAFE_OP", "OP", "UNKNOWN"]
+
+
+class CreateDiagnosisSessionRequest(BaseModel):
+    equipment_id: uuid.UUID
+    alarm_code: str = Field(min_length=1, max_length=80)
+    symptom_summary: str = Field(min_length=1)
+    log_excerpt: str | None = None
+    ethercat_state: EthercatState | None = None
+    io_snapshot: dict[str, bool] = Field(default_factory=dict)
+    recent_action: str | None = None
+    risk_level: RiskLevel = "LOW"
+
+
+class DiagnosisSessionRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    equipment_id: uuid.UUID
+    created_by_user_id: uuid.UUID
+    alarm_code: str
+    symptom_summary: str
+    log_excerpt: str | None = None
+    ethercat_state: str | None = None
+    io_snapshot: dict[str, bool]
+    recent_action: str | None = None
+    status: DiagnosisStatus
+    risk_level: RiskLevel
+    created_at: datetime
+    updated_at: datetime
+
+
+class DiagnosisSessionListResponse(BaseModel):
+    items: list[DiagnosisSessionRead]
