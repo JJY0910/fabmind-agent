@@ -1,0 +1,140 @@
+{
+  "tenant": {
+    "code": "FABMIND_DEMO",
+    "name": "FabMind Demo Tenant"
+  },
+  "roles": [
+    {
+      "code": "FIELD_ENGINEER",
+      "name": "Field Engineer"
+    },
+    {
+      "code": "SENIOR_ENGINEER",
+      "name": "Senior Engineer"
+    },
+    {
+      "code": "ADMIN",
+      "name": "Administrator"
+    }
+  ],
+  "users": [
+    {
+      "username": "field",
+      "display_name": "Demo Field Engineer",
+      "role_code": "FIELD_ENGINEER",
+      "password_hash": "local-demo-field-password-hash"
+    },
+    {
+      "username": "senior",
+      "display_name": "Demo Senior Engineer",
+      "role_code": "SENIOR_ENGINEER",
+      "password_hash": "local-demo-senior-password-hash"
+    },
+    {
+      "username": "admin",
+      "display_name": "Demo Administrator",
+      "role_code": "ADMIN",
+      "password_hash": "local-demo-admin-password-hash"
+    }
+  ],
+  "site": {
+    "code": "SITE-A",
+    "name": "Demo Site A"
+  },
+  "line": {
+    "code": "LINE-LP-A",
+    "name": "Load Port Demo Line",
+    "site_code": "SITE-A"
+  },
+  "equipment_family": {
+    "code": "LOAD_PORT_FOUP_CLAMP",
+    "name": "Load Port / FOUP Clamp"
+  },
+  "equipment": [
+    {
+      "code": "LP-01",
+      "name": "Load Port 01",
+      "vendor": "Synthetic Vendor",
+      "model": "LP-FC-DEMO",
+      "revision": "R1",
+      "status": "NORMAL"
+    },
+    {
+      "code": "LP-02",
+      "name": "Load Port 02",
+      "vendor": "Synthetic Vendor",
+      "model": "LP-FC-DEMO",
+      "revision": "R1",
+      "status": "WARNING"
+    },
+    {
+      "code": "LP-03",
+      "name": "Load Port 03",
+      "vendor": "Synthetic Vendor",
+      "model": "LP-FC-DEMO",
+      "revision": "R1",
+      "status": "NORMAL"
+    }
+  ],
+  "ethercat_devices": [
+    {
+      "equipment_code": "LP-01",
+      "slave_no": 1,
+      "name": "LP-01 Main Coupler",
+      "expected_state": "OP",
+      "vendor_id": "0x00000002",
+      "product_code": "0x1001"
+    },
+    {
+      "equipment_code": "LP-01",
+      "slave_no": 2,
+      "name": "LP-01 DI/DO Module",
+      "expected_state": "OP",
+      "vendor_id": "0x00000002",
+      "product_code": "0x2001"
+    },
+    {
+      "equipment_code": "LP-02",
+      "slave_no": 1,
+      "name": "LP-02 Main Coupler",
+      "expected_state": "OP",
+      "vendor_id": "0x00000002",
+      "product_code": "0x1001"
+    },
+    {
+      "equipment_code": "LP-02",
+      "slave_no": 3,
+      "name": "LP-02 Clamp I/O Module",
+      "expected_state": "OP",
+      "vendor_id": "0x00000002",
+      "product_code": "0x2002"
+    },
+    {
+      "equipment_code": "LP-03",
+      "slave_no": 1,
+      "name": "LP-03 Main Coupler",
+      "expected_state": "OP",
+      "vendor_id": "0x00000002",
+      "product_code": "0x1001"
+    },
+    {
+      "equipment_code": "LP-03",
+      "slave_no": 2,
+      "name": "LP-03 Mapping I/O Module",
+      "expected_state": "OP",
+      "vendor_id": "0x00000002",
+      "product_code": "0x2003"
+    }
+  ],
+  "audit_event": {
+    "actor_username": "admin",
+    "event_type": "SEED_DATA_LOADED",
+    "resource_type": "DATABASE",
+    "severity": "INFO",
+    "payload": {
+      "source": "PR-02 deterministic seed",
+      "scope": "Load Port / FOUP Clamp / EtherCAT I/O"
+    }
+  }
+}
+
