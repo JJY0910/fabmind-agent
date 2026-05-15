@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Clock, Activity, FileText, Microscope, ShieldAlert, Cpu } from "lucide-react";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -88,33 +89,49 @@ export default function HomePage() {
                 { eq: 'LP-01', alarm: 'LP-CLAMP-014', time: '10 mins ago', status: 'Analysis Complete', risk: 'Low', color: 'text-[#00cc66]', desc: 'Clamp 완료 센서 위치 이탈' },
                 { eq: 'LP-02', alarm: 'ECAT-STATE-021', time: '1 hour ago', status: 'Pending Approval', risk: 'High', color: 'text-[#ffaa00]', desc: 'EtherCAT Slave PRE-OP 고착' },
                 { eq: 'FC-11', alarm: 'FC-INTERLOCK-03', time: '3 hours ago', status: 'Resolved', risk: 'Low', color: 'text-slate-500', desc: '도어 닫힘 상태 불량' },
-              ].map((item, i) => (
-                <div key={i} className="p-4 hover:bg-[#111d33] transition-colors flex items-center justify-between cursor-pointer group">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-white text-xs bg-[#1a2c4d] px-2 py-0.5 rounded border border-[#1a2c4d] group-hover:border-[#00e5ff]/30 transition-colors">{item.eq}</span>
-                      <span className="font-mono text-[#00e5ff] text-sm font-medium">{item.alarm}</span>
+              ].map((item, i) => {
+                const content = (
+                  <div className="p-4 hover:bg-[#111d33] transition-colors flex items-center justify-between group">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-white text-xs bg-[#1a2c4d] px-2 py-0.5 rounded border border-[#1a2c4d] group-hover:border-[#00e5ff]/30 transition-colors">{item.eq}</span>
+                        <span className="font-mono text-[#00e5ff] text-sm font-medium">{item.alarm}</span>
+                      </div>
+                      <span className="text-sm text-slate-300">{item.desc}</span>
                     </div>
-                    <span className="text-sm text-slate-300">{item.desc}</span>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`text-sm font-medium ${item.color}`}>
-                      {item.status}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-[10px] uppercase tracking-wider font-bold border px-2 py-0.5 rounded-full ${
-                        item.risk === 'High' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' : 
-                        'border-slate-700 text-slate-400 bg-slate-800/50'
-                      }`}>
-                        {item.risk} Risk
+                    <div className="flex flex-col items-end gap-2">
+                      <span className={`text-sm font-medium ${item.color}`}>
+                        {item.status}
                       </span>
-                      <span className="text-xs text-slate-500 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {item.time}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[10px] uppercase tracking-wider font-bold border px-2 py-0.5 rounded-full ${
+                          item.risk === 'High' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' : 
+                          'border-slate-700 text-slate-400 bg-slate-800/50'
+                        }`}>
+                          {item.risk} Risk
+                        </span>
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {item.time}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+
+                if (item.eq === 'LP-01') {
+                  return (
+                    <Link key={i} href="/diagnosis-sessions/LP-01-SESSION" className="block outline-none focus:ring-2 focus:ring-[#00e5ff] rounded-t-lg">
+                      {content}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={i} className="cursor-pointer">
+                    {content}
+                  </div>
+                );
+              })}
             </div>
           </Card>
         </div>
