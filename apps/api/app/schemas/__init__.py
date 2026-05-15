@@ -1,5 +1,7 @@
 from app.schemas.auth import AuthUser, LoginRequest, LoginResponse, RoleCode
 from app.schemas.domain import (
+    AgentRunResult,
+    AgentStepRead,
     AlarmCodeListResponse,
     AlarmCodeRead,
     AuditEventListResponse,
@@ -7,6 +9,7 @@ from app.schemas.domain import (
     CreateDiagnosisSessionRequest,
     DiagnosisSessionListResponse,
     DiagnosisSessionRead,
+    DiagnosisHypothesisRead,
     EquipmentDetailResponse,
     EquipmentFamilyRead,
     EquipmentListResponse,
@@ -14,6 +17,8 @@ from app.schemas.domain import (
     EthercatDeviceRead,
     EthercatDeviceListResponse,
     EvidenceRead,
+    EvidenceLinkRead,
+    InspectionPlanItemRead,
     IoPointListResponse,
     IoPointRead,
     LineRead,
@@ -24,6 +29,8 @@ from app.schemas.domain import (
 )
 
 __all__ = [
+    "AgentRunResult",
+    "AgentStepRead",
     "AlarmCodeListResponse",
     "AlarmCodeRead",
     "AuthUser",
@@ -32,6 +39,7 @@ __all__ = [
     "CreateDiagnosisSessionRequest",
     "DiagnosisSessionListResponse",
     "DiagnosisSessionRead",
+    "DiagnosisHypothesisRead",
     "EquipmentDetailResponse",
     "EquipmentFamilyRead",
     "EquipmentListResponse",
@@ -39,6 +47,8 @@ __all__ = [
     "EthercatDeviceListResponse",
     "EthercatDeviceRead",
     "EvidenceRead",
+    "EvidenceLinkRead",
+    "InspectionPlanItemRead",
     "IoPointListResponse",
     "IoPointRead",
     "LineRead",

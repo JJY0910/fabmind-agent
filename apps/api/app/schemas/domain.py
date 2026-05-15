@@ -183,3 +183,67 @@ class DiagnosisSessionRead(BaseModel):
 
 class DiagnosisSessionListResponse(BaseModel):
     items: list[DiagnosisSessionRead]
+
+
+AgentRunStatus = Literal["COMPLETED", "INSUFFICIENT_EVIDENCE", "SAFETY_BLOCKED", "FAILED"]
+AgentSafetyResult = Literal[
+    "SAFE_READ_ONLY",
+    "APPROVAL_REQUIRED_FOR_FORCE_ACTION",
+    "POLICY_BLOCKED_RISKY_ACTION",
+]
+AgentStepStatus = Literal["COMPLETED", "NEEDS_MORE_EVIDENCE", "BLOCKED"]
+ConfidenceBand = Literal["HIGH", "MEDIUM", "LOW"]
+InspectionSafetyLevel = Literal["NORMAL", "CAUTION", "APPROVAL_REQUIRED"]
+
+
+class AgentStepRead(BaseModel):
+    id: uuid.UUID
+    step_order: int
+    name: str
+    status: AgentStepStatus
+    summary: str | None = None
+    details: dict[str, Any] | None = None
+
+
+class EvidenceLinkRead(BaseModel):
+    id: uuid.UUID
+    hypothesis_id: uuid.UUID | None = None
+    source_type: str
+    source_code: str
+    title: str
+    excerpt: str
+    relevance_reason: str
+
+
+class DiagnosisHypothesisRead(BaseModel):
+    id: uuid.UUID
+    rank: int
+    title: str
+    reasoning: str
+    confidence_band: ConfidenceBand
+    risk_level: RiskLevel
+    evidence_ids: list[str]
+    recommended_next_checks: list[str]
+
+
+class InspectionPlanItemRead(BaseModel):
+    id: uuid.UUID
+    item_order: int
+    title: str
+    instruction: str
+    expected_observation: str | None = None
+    safety_level: InspectionSafetyLevel
+    evidence_codes: list[str]
+
+
+class AgentRunResult(BaseModel):
+    run_id: uuid.UUID
+    session_id: uuid.UUID
+    status: AgentRunStatus
+    mode: str
+    safety_result: AgentSafetyResult
+    risk_level: RiskLevel
+    steps: list[AgentStepRead]
+    hypotheses: list[DiagnosisHypothesisRead]
+    evidence: list[EvidenceLinkRead]
+    inspection_plan_items: list[InspectionPlanItemRead]

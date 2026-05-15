@@ -8,8 +8,18 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.deps import ROLE_ADMIN, ROLE_FIELD, ROLE_SENIOR, require_roles
 from app.db.session import get_db
-from app.models import AlarmCode, DiagnosisSession, Equipment, User
-from app.schemas import CreateDiagnosisSessionRequest, DiagnosisSessionListResponse, DiagnosisSessionRead
+from app.models import AgentRun, AlarmCode, DiagnosisSession, Equipment, User
+from app.schemas import (
+    AgentRunResult,
+    AgentStepRead,
+    CreateDiagnosisSessionRequest,
+    DiagnosisHypothesisRead,
+    DiagnosisSessionListResponse,
+    DiagnosisSessionRead,
+    EvidenceLinkRead,
+    InspectionPlanItemRead,
+)
+from app.services.agent_engine import analyze_diagnosis_session
 from app.services.audit import create_audit_event
 
 
@@ -115,6 +125,29 @@ def get_diagnosis_session(
     return DiagnosisSessionRead.model_validate(session)
 
 
+@router.post("/{session_id}/analyze", response_model=AgentRunResult)
+def analyze_diagnosis_session_endpoint(
+    session_id: uuid.UUID,
+    current_user: User = Depends(require_roles(*READ_WRITE_ROLES)),
+    db: Session = Depends(get_db),
+) -> AgentRunResult:
+    session = db.scalar(
+        select(DiagnosisSession).where(
+            DiagnosisSession.id == session_id,
+            DiagnosisSession.tenant_id == current_user.tenant_id,
+        )
+    )
+    if session is None:
+        _audit_cross_tenant_session_attempt(db, current_user, session_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Diagnosis session not found")
+
+    run = analyze_diagnosis_session(db, session=session, actor_user_id=current_user.id)
+    db.commit()
+    db.refresh(session)
+    db.refresh(run)
+    return _agent_run_response(run, session)
+
+
 def _audit_cross_tenant_equipment_attempt(db: Session, current_user: User, equipment_id: uuid.UUID) -> None:
     equipment = db.scalar(select(Equipment).where(Equipment.id == equipment_id))
     if equipment is None:
@@ -147,3 +180,68 @@ def _audit_cross_tenant_session_attempt(db: Session, current_user: User, session
         payload={"reason": "cross_tenant_or_not_visible"},
     )
     db.commit()
+
+
+def _agent_run_response(run: AgentRun, session: DiagnosisSession) -> AgentRunResult:
+    hypotheses = []
+    evidence = []
+    for hypothesis in sorted(run.hypotheses, key=lambda item: item.rank):
+        links = sorted(hypothesis.evidence_links, key=lambda item: item.source_code)
+        evidence.extend(
+            EvidenceLinkRead(
+                id=link.id,
+                hypothesis_id=link.hypothesis_id,
+                source_type=link.source_type,
+                source_code=link.source_code,
+                title=link.title,
+                excerpt=link.excerpt,
+                relevance_reason=link.relevance_reason,
+            )
+            for link in links
+        )
+        hypotheses.append(
+            DiagnosisHypothesisRead(
+                id=hypothesis.id,
+                rank=hypothesis.rank,
+                title=hypothesis.title,
+                reasoning=hypothesis.reasoning,
+                confidence_band=hypothesis.confidence_band,
+                risk_level=hypothesis.risk_level,
+                evidence_ids=[link.source_code for link in links],
+                recommended_next_checks=hypothesis.recommended_next_checks,
+            )
+        )
+
+    return AgentRunResult(
+        run_id=run.id,
+        session_id=run.session_id,
+        status=run.status,
+        mode=run.mode,
+        safety_result=run.safety_result,
+        risk_level=session.risk_level,
+        steps=[
+            AgentStepRead(
+                id=step.id,
+                step_order=step.step_order,
+                name=step.name,
+                status=step.status,
+                summary=step.summary,
+                details=step.details,
+            )
+            for step in sorted(run.steps, key=lambda item: item.step_order)
+        ],
+        hypotheses=hypotheses,
+        evidence=evidence,
+        inspection_plan_items=[
+            InspectionPlanItemRead(
+                id=item.id,
+                item_order=item.item_order,
+                title=item.title,
+                instruction=item.instruction,
+                expected_observation=item.expected_observation,
+                safety_level=item.safety_level,
+                evidence_codes=item.evidence_codes,
+            )
+            for item in sorted(run.inspection_plan_items, key=lambda item: item.item_order)
+        ],
+    )

@@ -187,9 +187,9 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
-  /api/v1/diagnosis-sessions/{session_id}/run-agent:
+  /api/v1/diagnosis-sessions/{session_id}/analyze:
     post:
-      summary: Run deterministic agent
+      summary: Run deterministic diagnosis analysis
       parameters:
         - name: session_id
           in: path
@@ -202,6 +202,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentRunResult'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/reports:
     post:
       summary: Create report draft
@@ -445,10 +448,16 @@ components:
         report: { $ref: '#/components/schemas/Report' }
     AgentRunResult:
       type: object
-      required: [run_id, status, steps, hypotheses, evidence]
+      required: [run_id, session_id, status, mode, safety_result, risk_level, steps, hypotheses, evidence, inspection_plan_items]
       properties:
         run_id: { type: string }
-        status: { type: string }
+        session_id: { type: string }
+        status: { type: string, enum: [COMPLETED, INSUFFICIENT_EVIDENCE, SAFETY_BLOCKED, FAILED] }
+        mode: { type: string, enum: [DETERMINISTIC] }
+        safety_result:
+          type: string
+          enum: [SAFE_READ_ONLY, APPROVAL_REQUIRED_FOR_FORCE_ACTION, POLICY_BLOCKED_RISKY_ACTION]
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
         steps:
           type: array
           items: { $ref: '#/components/schemas/AgentStep' }
@@ -457,23 +466,58 @@ components:
           items: { $ref: '#/components/schemas/Hypothesis' }
         evidence:
           type: array
-          items: { $ref: '#/components/schemas/Evidence' }
-        safety_result: { type: string }
+          items: { $ref: '#/components/schemas/EvidenceLink' }
+        inspection_plan_items:
+          type: array
+          items: { $ref: '#/components/schemas/InspectionPlanItem' }
     AgentStep:
       type: object
+      required: [id, step_order, name, status]
       properties:
+        id: { type: string }
+        step_order: { type: integer }
         name: { type: string }
-        status: { type: string }
+        status: { type: string, enum: [COMPLETED, NEEDS_MORE_EVIDENCE, BLOCKED] }
         summary: { type: string }
+        details: { type: object }
     Hypothesis:
       type: object
-      required: [rank, title, confidence_band, evidence_ids]
+      required: [id, rank, title, confidence_band, risk_level, evidence_ids, recommended_next_checks]
       properties:
+        id: { type: string }
         rank: { type: integer }
         title: { type: string }
         reasoning: { type: string }
         confidence_band: { type: string, enum: [HIGH, MEDIUM, LOW] }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
         evidence_ids:
+          type: array
+          items: { type: string }
+        recommended_next_checks:
+          type: array
+          items: { type: string }
+    EvidenceLink:
+      type: object
+      required: [id, source_type, source_code, title, excerpt, relevance_reason]
+      properties:
+        id: { type: string }
+        hypothesis_id: { type: string }
+        source_type: { type: string }
+        source_code: { type: string }
+        title: { type: string }
+        excerpt: { type: string }
+        relevance_reason: { type: string }
+    InspectionPlanItem:
+      type: object
+      required: [id, item_order, title, instruction, safety_level, evidence_codes]
+      properties:
+        id: { type: string }
+        item_order: { type: integer }
+        title: { type: string }
+        instruction: { type: string }
+        expected_observation: { type: string }
+        safety_level: { type: string, enum: [NORMAL, CAUTION, APPROVAL_REQUIRED] }
+        evidence_codes:
           type: array
           items: { type: string }
     Evidence:

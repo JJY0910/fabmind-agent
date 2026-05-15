@@ -234,3 +234,118 @@ class DiagnosisSession(Base):
 
     equipment: Mapped[Equipment] = relationship(back_populates="diagnosis_sessions")
     created_by: Mapped[User] = relationship()
+    agent_runs: Mapped[list["AgentRun"]] = relationship(back_populates="session")
+
+
+class AgentRun(Base):
+    __tablename__ = "agent_runs"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('COMPLETED','INSUFFICIENT_EVIDENCE','SAFETY_BLOCKED','FAILED')",
+            name="ck_agent_runs_status",
+        ),
+        Index("idx_agent_runs_session", "tenant_id", "session_id"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    session_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("diagnosis_sessions.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    mode: Mapped[str] = mapped_column(String(40), nullable=False, default="DETERMINISTIC", server_default="DETERMINISTIC")
+    safety_result: Mapped[str] = mapped_column(String(80), nullable=False, default="SAFE_READ_ONLY", server_default="SAFE_READ_ONLY")
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    session: Mapped[DiagnosisSession] = relationship(back_populates="agent_runs")
+    steps: Mapped[list["AgentStep"]] = relationship(back_populates="agent_run", order_by="AgentStep.step_order")
+    hypotheses: Mapped[list["DiagnosisHypothesis"]] = relationship(
+        back_populates="agent_run",
+        order_by="DiagnosisHypothesis.rank",
+    )
+    inspection_plan_items: Mapped[list["InspectionPlanItem"]] = relationship(
+        back_populates="agent_run",
+        order_by="InspectionPlanItem.item_order",
+    )
+
+
+class AgentStep(Base):
+    __tablename__ = "agent_steps"
+    __table_args__ = (
+        UniqueConstraint("agent_run_id", "step_order", name="uq_agent_steps_run_order"),
+        Index("idx_agent_steps_run", "agent_run_id"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("agent_runs.id"), nullable=False)
+    step_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    summary: Mapped[str | None] = mapped_column(Text)
+    details: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    agent_run: Mapped[AgentRun] = relationship(back_populates="steps")
+
+
+class DiagnosisHypothesis(Base):
+    __tablename__ = "diagnosis_hypotheses"
+    __table_args__ = (
+        CheckConstraint("confidence_band IN ('HIGH','MEDIUM','LOW')", name="ck_diagnosis_hypotheses_confidence_band"),
+        CheckConstraint("risk_level IN ('LOW','MEDIUM','HIGH','CRITICAL')", name="ck_diagnosis_hypotheses_risk_level"),
+        UniqueConstraint("agent_run_id", "rank", name="uq_diagnosis_hypotheses_run_rank"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("agent_runs.id"), nullable=False)
+    rank: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    reasoning: Mapped[str] = mapped_column(Text, nullable=False)
+    confidence_band: Mapped[str] = mapped_column(String(20), nullable=False)
+    risk_level: Mapped[str] = mapped_column(String(20), nullable=False)
+    recommended_next_checks: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    agent_run: Mapped[AgentRun] = relationship(back_populates="hypotheses")
+    evidence_links: Mapped[list["EvidenceLink"]] = relationship(back_populates="hypothesis")
+
+
+class EvidenceLink(Base):
+    __tablename__ = "evidence_links"
+    __table_args__ = (Index("idx_evidence_links_hypothesis", "hypothesis_id"),)
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    hypothesis_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("diagnosis_hypotheses.id"))
+    source_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    source_code: Mapped[str] = mapped_column(String(120), nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    excerpt: Mapped[str] = mapped_column(Text, nullable=False)
+    relevance_reason: Mapped[str] = mapped_column(Text, nullable=False)
+
+    hypothesis: Mapped[DiagnosisHypothesis | None] = relationship(back_populates="evidence_links")
+
+
+class InspectionPlanItem(Base):
+    __tablename__ = "inspection_plan_items"
+    __table_args__ = (
+        CheckConstraint(
+            "safety_level IN ('NORMAL','CAUTION','APPROVAL_REQUIRED')",
+            name="ck_inspection_plan_items_safety_level",
+        ),
+        UniqueConstraint("agent_run_id", "item_order", name="uq_inspection_plan_items_run_order"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("agent_runs.id"), nullable=False)
+    item_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    instruction: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_observation: Mapped[str | None] = mapped_column(Text)
+    safety_level: Mapped[str] = mapped_column(String(40), nullable=False, default="NORMAL", server_default="NORMAL")
+    evidence_codes: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    agent_run: Mapped[AgentRun] = relationship(back_populates="inspection_plan_items")

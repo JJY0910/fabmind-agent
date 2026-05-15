@@ -137,8 +137,9 @@ CREATE TABLE agent_runs (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
   session_id UUID NOT NULL REFERENCES diagnosis_sessions(id),
-  status TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('COMPLETED','INSUFFICIENT_EVIDENCE','SAFETY_BLOCKED','FAILED')),
   mode TEXT NOT NULL DEFAULT 'DETERMINISTIC',
+  safety_result TEXT NOT NULL DEFAULT 'SAFE_READ_ONLY',
   started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   completed_at TIMESTAMPTZ
 );
@@ -152,7 +153,8 @@ CREATE TABLE agent_steps (
   status TEXT NOT NULL,
   summary TEXT,
   details JSONB,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (agent_run_id, step_order)
 );
 
 CREATE TABLE diagnosis_hypotheses (
@@ -164,7 +166,9 @@ CREATE TABLE diagnosis_hypotheses (
   reasoning TEXT NOT NULL,
   confidence_band TEXT NOT NULL CHECK (confidence_band IN ('HIGH','MEDIUM','LOW')),
   risk_level TEXT NOT NULL CHECK (risk_level IN ('LOW','MEDIUM','HIGH','CRITICAL')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  recommended_next_checks JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (agent_run_id, rank)
 );
 
 CREATE TABLE evidence_links (
@@ -176,6 +180,20 @@ CREATE TABLE evidence_links (
   title TEXT NOT NULL,
   excerpt TEXT NOT NULL,
   relevance_reason TEXT NOT NULL
+);
+
+CREATE TABLE inspection_plan_items (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id),
+  agent_run_id UUID NOT NULL REFERENCES agent_runs(id),
+  item_order INT NOT NULL,
+  title TEXT NOT NULL,
+  instruction TEXT NOT NULL,
+  expected_observation TEXT,
+  safety_level TEXT NOT NULL CHECK (safety_level IN ('NORMAL','CAUTION','APPROVAL_REQUIRED')) DEFAULT 'NORMAL',
+  evidence_codes JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (agent_run_id, item_order)
 );
 
 CREATE TABLE checklist_runs (
@@ -251,6 +269,8 @@ CREATE INDEX idx_equipment_tenant_id ON equipment(tenant_id);
 CREATE INDEX idx_alarm_codes_tenant_family ON alarm_codes(tenant_id, equipment_family_id);
 CREATE INDEX idx_io_points_equipment ON io_points(tenant_id, equipment_id);
 CREATE INDEX idx_diagnosis_sessions_tenant_equipment ON diagnosis_sessions(tenant_id, equipment_id);
+CREATE INDEX idx_agent_runs_session ON agent_runs(tenant_id, session_id);
 CREATE INDEX idx_agent_steps_run ON agent_steps(agent_run_id);
+CREATE INDEX idx_evidence_links_hypothesis ON evidence_links(hypothesis_id);
 CREATE INDEX idx_audit_events_tenant_created ON audit_events(tenant_id, created_at DESC);
 CREATE INDEX idx_document_chunks_embedding ON document_chunks USING ivfflat (embedding vector_cosine_ops);
