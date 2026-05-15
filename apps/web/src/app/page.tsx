@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
-      
+
       {/* Page Header */}
       <div className="flex flex-col gap-2 mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -30,7 +30,7 @@ export default function HomePage() {
             <p className="text-xs text-slate-400 mt-1">2 critical priority</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between space-y-0 pb-2">
@@ -70,7 +70,7 @@ export default function HomePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
-        
+
         {/* Golden Path Section */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
@@ -82,7 +82,7 @@ export default function HomePage() {
               View All
             </button>
           </div>
-          
+
           <Card className="border-[#1a2c4d] overflow-hidden">
             <div className="divide-y divide-[#1a2c4d]">
               {[
@@ -105,7 +105,7 @@ export default function HomePage() {
                       </span>
                       <div className="flex items-center gap-3">
                         <span className={`text-[10px] uppercase tracking-wider font-bold border px-2 py-0.5 rounded-full ${
-                          item.risk === 'High' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' : 
+                          item.risk === 'High' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' :
                           'border-slate-700 text-slate-400 bg-slate-800/50'
                         }`}>
                           {item.risk} Risk
@@ -138,14 +138,14 @@ export default function HomePage() {
 
         {/* Pending Approvals & Risk Summary */}
         <div className="space-y-6">
-          
+
           {/* Approvals */}
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-slate-400" />
               Required Actions
             </h2>
-            
+
             <Card className="border-[#ffaa00]/30 bg-[#ffaa00]/5 shadow-[0_0_15px_rgba(255,170,0,0.05)]">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm text-[#ffaa00] flex items-center gap-2">
