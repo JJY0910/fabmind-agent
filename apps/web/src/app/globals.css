@@ -1,4 +1,47 @@
-* { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; }
-body { background: #08111f; }
-a { color: inherit; text-decoration: none; }
+@import "tailwindcss";
+
+@theme {
+  --color-industrial-900: #050b14;
+  --color-industrial-800: #0a1322;
+  --color-industrial-700: #111d33;
+  --color-industrial-600: #1a2c4d;
+  --color-cyan-accent: #00e5ff;
+  --color-cyan-glow: rgba(0, 229, 255, 0.2);
+  --color-text-main: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-danger: #ff3366;
+  --color-warning: #ffaa00;
+  --color-success: #00cc66;
+}
+
+@layer base {
+  :root {
+    --background: 215 60% 5%;
+    --foreground: 210 40% 98%;
+    --card: 216 54% 9%;
+    --card-foreground: 210 40% 98%;
+    --border: 215 50% 13%;
+    --primary: 186 100% 50%;
+    --primary-foreground: 215 60% 5%;
+  }
+
+  body {
+    background-color: var(--color-industrial-900);
+    color: var(--color-text-main);
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom Utilities for Industrial Theme */
+.glass-panel {
+  background: rgba(10, 19, 34, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(26, 44, 77, 0.8);
+}
+
+.neon-border {
+  box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.3), 0 0 10px rgba(0, 229, 255, 0.1);
+}
