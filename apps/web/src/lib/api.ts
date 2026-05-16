@@ -63,3 +63,13 @@ export async function fetchReportDraft(reportDraftId: string) {
   if (!res.ok) throw new Error('Failed to fetch report draft');
   return res.json();
 }
+
+export async function updateChecklistItem(checklistRunId: string, itemId: string, payload: { status?: string, field_note?: string }) {
+  const res = await fetch(`${BASE_URL}/api/v1/checklist-runs/${checklistRunId}/items/${itemId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('Failed to update checklist item');
+  return res.json();
+}

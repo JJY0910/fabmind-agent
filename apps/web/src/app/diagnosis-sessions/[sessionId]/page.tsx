@@ -104,11 +104,14 @@ export default function DiagnosisSessionPage() {
           </div>
           <p className="text-slate-400">Deterministic Rule Engine Execution</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] rounded-md text-sm font-medium text-white transition-colors">
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <Link href={`/checklist-runs/RUN-${session.id.replace('-SESSION', '')}`} className="px-4 py-2 bg-[#00cc66] hover:bg-[#00cc66]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,204,102,0.3)] transition-all whitespace-nowrap">
+            Open Checklist Runner
+          </Link>
+          <button className="px-4 py-2 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] rounded-md text-sm font-medium text-white transition-colors whitespace-nowrap">
             View Raw Snapshot
           </button>
-          <button className="px-4 py-2 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all">
+          <button className="px-4 py-2 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all whitespace-nowrap">
             Generate Report Draft
           </button>
         </div>
