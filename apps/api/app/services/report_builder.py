@@ -226,7 +226,7 @@ def _build_safety_notes(
             f"Risk level: {diagnosis_session.risk_level}",
             f"Safety result: {agent_run.safety_result}",
             f"Blocked checklist items: {blocked_count}",
-            "Do not bypass interlocks, force outputs, or issue machine-control commands from this report.",
+            "Do not defeat safety interlocks, command machine outputs, or issue machine-control commands from this report.",
             "Senior approval is required before risky recovery work.",
         ]
     )

@@ -73,7 +73,7 @@ def test_create_report_draft_success(client_and_session: tuple[TestClient, Sessi
     assert body["title"].startswith("Diagnosis Report")
     assert "Clamp done sensor" in body["root_cause"]
     assert "LP-CLAMP-014" in body["evidence_summary"]
-    assert "Do not bypass interlocks" in body["safety_notes"]
+    assert "Do not defeat safety interlocks" in body["safety_notes"]
     assert _audit_count(session, "REPORT_DRAFT_CREATED") == 1
 
 

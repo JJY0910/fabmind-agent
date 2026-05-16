@@ -62,10 +62,25 @@ class EquipmentSummary(BaseModel):
     name: str
     family: str
     status: str
+    equipment_id: uuid.UUID | None = None
+    equipment_code: str | None = None
+    equipment_name: str | None = None
+    equipment_type: str | None = None
+    subsystem: str | None = None
+    location: str | None = None
+    line_code: str | None = None
+    operational_status: str | None = None
+    current_alarm_code: str | None = None
+    risk_level: Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"] | None = None
+    last_seen_at: datetime | None = None
+    linked_diagnosis_session_id: uuid.UUID | None = None
 
 
 class EquipmentListResponse(BaseModel):
     items: list[EquipmentSummary]
+    total: int = 0
+    limit: int = 0
+    offset: int = 0
 
 
 class AlarmCodeRead(BaseModel):
@@ -291,6 +306,27 @@ class UpdateChecklistItemRequest(BaseModel):
     field_note: str | None = None
 
 
+class ChecklistRunSummary(BaseModel):
+    checklist_run_id: uuid.UUID
+    diagnosis_session_id: uuid.UUID
+    equipment_code: str
+    checklist_name: str
+    status: ChecklistRunStatus
+    total_items: int
+    completed_items: int
+    failed_items: int
+    pending_items: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChecklistRunListResponse(BaseModel):
+    items: list[ChecklistRunSummary]
+    total: int
+    limit: int
+    offset: int
+
+
 ReportDraftStatus = Literal["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"]
 ReportDecision = Literal["APPROVED", "REJECTED"]
 
@@ -336,6 +372,83 @@ class ReportApprovalRequest(BaseModel):
 
 class ReportRejectionRequest(BaseModel):
     comment: str = Field(min_length=1)
+
+
+class ReportDraftSummary(BaseModel):
+    report_draft_id: uuid.UUID
+    diagnosis_session_id: uuid.UUID
+    equipment_code: str
+    status: ReportDraftStatus
+    root_cause_summary: str
+    created_by: str
+    created_at: datetime
+    updated_at: datetime
+    submitted_at: datetime | None = None
+
+
+class ReportDraftListResponse(BaseModel):
+    items: list[ReportDraftSummary]
+    total: int
+    limit: int
+    offset: int
+
+
+class ApprovalQueueItem(BaseModel):
+    approval_id: uuid.UUID | None = None
+    report_draft_id: uuid.UUID
+    approval_status: str
+    requested_by: str
+    reviewer_id: uuid.UUID | None = None
+    reviewer_role: str | None = None
+    requested_at: datetime
+    reviewed_at: datetime | None = None
+    reviewer_comment: str | None = None
+    rejection_reason: str | None = None
+
+
+class ApprovalQueueResponse(BaseModel):
+    items: list[ApprovalQueueItem]
+    total: int
+    limit: int
+    offset: int
+
+
+class IncidentSummary(BaseModel):
+    incident_id: uuid.UUID
+    equipment_id: uuid.UUID
+    equipment_code: str
+    alarm_code: str
+    title: str
+    summary: str
+    risk_level: RiskLevel
+    status: str
+    opened_at: datetime
+    updated_at: datetime
+    owner: str
+    assigned_role: str
+    diagnosis_session_id: uuid.UUID
+    linked_checklist_run_id: uuid.UUID | None = None
+    linked_report_draft_id: uuid.UUID | None = None
+
+
+class IncidentListResponse(BaseModel):
+    items: list[IncidentSummary]
+    total: int
+    limit: int
+    offset: int
+
+
+class SystemSafetySettingsResponse(BaseModel):
+    external_ai_enabled: bool
+    equipment_control_enabled: bool
+    interlock_bypass_allowed: bool
+    output_forcing_allowed: bool
+    human_approval_required: bool
+    audit_logging_enabled: bool
+    deterministic_engine_enabled: bool
+    allowed_equipment_scope: list[str]
+    policy_version: str
+    generated_at: datetime
 
 
 class DashboardRecentDiagnosisSession(BaseModel):
