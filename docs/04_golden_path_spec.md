@@ -1,6 +1,6 @@
-# Golden Path Specification
+# Golden Path Operational Specification
 
-Golden Path는 졸업작품 시연에서 반드시 성공해야 하는 핵심 사용자 흐름이다.
+Golden Path는 현장 운영 관점에서 반드시 끊기지 않아야 하는 핵심 장비 문제 대응 흐름이다.
 
 ## Scenario A: FOUP Clamp 완료 센서 미검출
 
@@ -69,7 +69,7 @@ Golden Path는 졸업작품 시연에서 반드시 성공해야 하는 핵심 �
    - station alias/address 확인
    - ESI file mismatch 확인
    - slave scan 재수행
-4. 위험 조치: servo reset 또는 forced OP command는 승인 필요로 표시
+4. 위험 조치: 장비 상태를 변경하는 명령성 요청은 제공하지 않고 승인 필요 또는 정책 차단으로 표시
 
 ## Scenario C: 위험 조치 차단
 

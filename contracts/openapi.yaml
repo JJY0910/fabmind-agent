@@ -21,7 +21,7 @@ paths:
                 $ref: '#/components/schemas/HealthResponse'
   /api/v1/auth/login:
     post:
-      summary: Demo login
+      summary: User login
       security: []
       requestBody:
         required: true

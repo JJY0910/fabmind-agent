@@ -41,16 +41,16 @@
 |---|---|
 | 테스트 | pytest + Playwright E2E 포함 |
 | CI | GitHub Actions green |
-| 문서 | README, 사용법, 발표 스크립트, architecture docs 포함 |
+| 문서 | README, 사용법, 운영 workflow script, architecture docs 포함 |
 | Git 운영 | PR 단위 개발 기록이 남음 |
 
-## 6. 발표/포트폴리오 - 10점
+## 6. 운영 검증 - 10점
 
 | 기준 | 만점 조건 |
 |---|---|
-| 시연 | Golden Path가 5분 안에 안정적으로 성공 |
+| 재현성 | Golden Path가 5분 안에 안정적으로 재현 |
 | 논리 | 왜 이 구조를 선택했는지 방어 가능 |
-| 회사 관점 | README와 screenshots만 봐도 채용 담당자가 이해 가능 |
+| 운영 관점 | README와 screenshots만 봐도 시스템 경계와 workflow가 이해 가능 |
 
 ## 탈락 조건
 

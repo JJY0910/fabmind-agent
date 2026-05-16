@@ -25,7 +25,7 @@ FabMind Agent는 Load Port / FOUP Clamp / EtherCAT I/O 장비군을 대상으로
 
 ## Why This Is Different
 
-대부분의 AI 데모는 대화형 답변만 보여준다. FabMind Agent는 다음을 모두 포함한다.
+대부분의 범용 AI 도구는 대화형 답변에 머문다. FabMind Agent는 다음을 모두 포함한다.
 
 - 표준 진단 입력 계약
 - 규칙 기반 원인 추론
@@ -42,8 +42,8 @@ FabMind Agent는 Load Port / FOUP Clamp / EtherCAT I/O 장비군을 대상으로
 - 유지보수 협력사 엔지니어
 - 장비 교육센터
 - 장비 자동화/SI 기업
-- 졸업작품 심사위원 및 채용 담당자
+- 운영 품질/시스템 검토자
 
-## Final Demo Scenario
+## Core Operational Scenario
 
 FOUP Clamp 완료 센서가 감지되지 않는 상황에서, 사용자가 알람 코드와 DI/DO 상태를 입력하면 FabMind Agent가 센서 정렬 불량을 1순위 원인으로 제시하고, 근거 문서와 I/O 상태를 연결하여 점검 체크리스트와 보고서 초안을 생성한다.
