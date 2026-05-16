@@ -111,9 +111,9 @@ export default function DiagnosisSessionPage() {
           <button className="px-4 py-2 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] rounded-md text-sm font-medium text-white transition-colors whitespace-nowrap">
             View Raw Snapshot
           </button>
-          <button className="px-4 py-2 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all whitespace-nowrap">
+          <Link href={`/report-drafts/RPT-${session.id.replace('-SESSION', '')}`} className="px-4 py-2 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all whitespace-nowrap">
             Generate Report Draft
-          </button>
+          </Link>
         </div>
       </div>
 
