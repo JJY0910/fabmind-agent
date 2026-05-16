@@ -119,6 +119,9 @@ class Equipment(Base):
     io_points: Mapped[list["IoPoint"]] = relationship(back_populates="equipment")
     ethercat_devices: Mapped[list["EthercatDevice"]] = relationship(back_populates="equipment")
     diagnosis_sessions: Mapped[list["DiagnosisSession"]] = relationship(back_populates="equipment")
+    alarm_events: Mapped[list["EquipmentAlarmEvent"]] = relationship(back_populates="equipment")
+    io_snapshots: Mapped[list["EquipmentIOSnapshot"]] = relationship(back_populates="equipment")
+    ethercat_status_snapshots: Mapped[list["EquipmentEthercatStatusSnapshot"]] = relationship(back_populates="equipment")
 
 
 class AlarmCode(Base):
@@ -180,6 +183,90 @@ class EthercatDevice(Base):
     product_code: Mapped[str | None] = mapped_column(String(80))
 
     equipment: Mapped[Equipment] = relationship(back_populates="ethercat_devices")
+
+
+class EquipmentAlarmEvent(Base):
+    __tablename__ = "equipment_alarm_events"
+    __table_args__ = (
+        CheckConstraint("severity IN ('LOW','MEDIUM','HIGH','CRITICAL')", name="ck_equipment_alarm_events_severity"),
+        CheckConstraint(
+            "event_status IN ('ACTIVE','ACKNOWLEDGED','CLEARED')",
+            name="ck_equipment_alarm_events_status",
+        ),
+        Index("idx_equipment_alarm_events_tenant_occurred", "tenant_id", "occurred_at", "received_at"),
+        Index("idx_equipment_alarm_events_equipment", "tenant_id", "equipment_id"),
+        Index("idx_equipment_alarm_events_severity", "tenant_id", "severity"),
+        Index("idx_equipment_alarm_events_status", "tenant_id", "event_status"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    equipment_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("equipment.id"), nullable=False)
+    diagnosis_session_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("diagnosis_sessions.id"))
+    source_event_id: Mapped[str | None] = mapped_column(String(160))
+    alarm_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    alarm_name: Mapped[str | None] = mapped_column(String(240))
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    event_status: Mapped[str] = mapped_column(String(40), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    source_system: Mapped[str] = mapped_column(String(120), nullable=False)
+    raw_payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+
+    equipment: Mapped[Equipment] = relationship(back_populates="alarm_events")
+    diagnosis_session: Mapped[DiagnosisSession | None] = relationship()
+
+
+class EquipmentIOSnapshot(Base):
+    __tablename__ = "equipment_io_snapshots"
+    __table_args__ = (
+        Index("idx_equipment_io_snapshots_tenant_captured", "tenant_id", "captured_at", "received_at"),
+        Index("idx_equipment_io_snapshots_equipment", "tenant_id", "equipment_id"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    equipment_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("equipment.id"), nullable=False)
+    source_snapshot_id: Mapped[str | None] = mapped_column(String(160))
+    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    source_system: Mapped[str] = mapped_column(String(120), nullable=False)
+    observed_inputs: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    observed_outputs: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    raw_payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+
+    equipment: Mapped[Equipment] = relationship(back_populates="io_snapshots")
+
+
+class EquipmentEthercatStatusSnapshot(Base):
+    __tablename__ = "equipment_ethercat_status_snapshots"
+    __table_args__ = (
+        Index(
+            "idx_equipment_ethercat_status_snapshots_tenant_captured",
+            "tenant_id",
+            "captured_at",
+            "received_at",
+        ),
+        Index("idx_equipment_ethercat_status_snapshots_equipment", "tenant_id", "equipment_id"),
+        Index("idx_equipment_ethercat_status_snapshots_master_state", "tenant_id", "master_state"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    equipment_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("equipment.id"), nullable=False)
+    source_snapshot_id: Mapped[str | None] = mapped_column(String(160))
+    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    source_system: Mapped[str] = mapped_column(String(120), nullable=False)
+    master_state: Mapped[str] = mapped_column(String(40), nullable=False)
+    slave_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    working_counter: Mapped[int | None] = mapped_column(Integer)
+    link_status: Mapped[str] = mapped_column(String(80), nullable=False)
+    error_code: Mapped[str | None] = mapped_column(String(120))
+    error_summary: Mapped[str | None] = mapped_column(Text)
+    raw_payload: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+
+    equipment: Mapped[Equipment] = relationship(back_populates="ethercat_status_snapshots")
 
 
 class AuditEvent(Base):

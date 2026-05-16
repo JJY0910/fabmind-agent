@@ -103,6 +103,36 @@ CREATE TABLE ethercat_devices (
   UNIQUE (tenant_id, equipment_id, slave_no)
 );
 
+CREATE TABLE equipment_io_snapshots (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id),
+  equipment_id UUID NOT NULL REFERENCES equipment(id),
+  source_snapshot_id TEXT,
+  captured_at TIMESTAMPTZ NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  source_system TEXT NOT NULL,
+  observed_inputs JSONB NOT NULL,
+  observed_outputs JSONB NOT NULL,
+  raw_payload JSONB NOT NULL
+);
+
+CREATE TABLE equipment_ethercat_status_snapshots (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id),
+  equipment_id UUID NOT NULL REFERENCES equipment(id),
+  source_snapshot_id TEXT,
+  captured_at TIMESTAMPTZ NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  source_system TEXT NOT NULL,
+  master_state TEXT NOT NULL,
+  slave_count INT NOT NULL,
+  working_counter INT,
+  link_status TEXT NOT NULL,
+  error_code TEXT,
+  error_summary TEXT,
+  raw_payload JSONB NOT NULL
+);
+
 CREATE TABLE document_chunks (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
@@ -131,6 +161,22 @@ CREATE TABLE diagnosis_sessions (
   risk_level TEXT NOT NULL CHECK (risk_level IN ('LOW','MEDIUM','HIGH','CRITICAL')) DEFAULT 'LOW',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE equipment_alarm_events (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id),
+  equipment_id UUID NOT NULL REFERENCES equipment(id),
+  diagnosis_session_id UUID REFERENCES diagnosis_sessions(id),
+  source_event_id TEXT,
+  alarm_code TEXT NOT NULL,
+  alarm_name TEXT,
+  severity TEXT NOT NULL CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL')),
+  event_status TEXT NOT NULL CHECK (event_status IN ('ACTIVE','ACKNOWLEDGED','CLEARED')) DEFAULT 'ACTIVE',
+  occurred_at TIMESTAMPTZ NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  source_system TEXT NOT NULL,
+  raw_payload JSONB NOT NULL
 );
 
 CREATE TABLE agent_runs (
@@ -281,6 +327,15 @@ CREATE TABLE audit_events (
 CREATE INDEX idx_equipment_tenant_id ON equipment(tenant_id);
 CREATE INDEX idx_alarm_codes_tenant_family ON alarm_codes(tenant_id, equipment_family_id);
 CREATE INDEX idx_io_points_equipment ON io_points(tenant_id, equipment_id);
+CREATE INDEX idx_equipment_alarm_events_tenant_occurred ON equipment_alarm_events(tenant_id, occurred_at DESC, received_at DESC);
+CREATE INDEX idx_equipment_alarm_events_equipment ON equipment_alarm_events(tenant_id, equipment_id);
+CREATE INDEX idx_equipment_alarm_events_severity ON equipment_alarm_events(tenant_id, severity);
+CREATE INDEX idx_equipment_alarm_events_status ON equipment_alarm_events(tenant_id, event_status);
+CREATE INDEX idx_equipment_io_snapshots_tenant_captured ON equipment_io_snapshots(tenant_id, captured_at DESC, received_at DESC);
+CREATE INDEX idx_equipment_io_snapshots_equipment ON equipment_io_snapshots(tenant_id, equipment_id);
+CREATE INDEX idx_equipment_ethercat_status_snapshots_tenant_captured ON equipment_ethercat_status_snapshots(tenant_id, captured_at DESC, received_at DESC);
+CREATE INDEX idx_equipment_ethercat_status_snapshots_equipment ON equipment_ethercat_status_snapshots(tenant_id, equipment_id);
+CREATE INDEX idx_equipment_ethercat_status_snapshots_master_state ON equipment_ethercat_status_snapshots(tenant_id, master_state);
 CREATE INDEX idx_diagnosis_sessions_tenant_equipment ON diagnosis_sessions(tenant_id, equipment_id);
 CREATE INDEX idx_agent_runs_session ON agent_runs(tenant_id, session_id);
 CREATE INDEX idx_agent_steps_run ON agent_steps(agent_run_id);

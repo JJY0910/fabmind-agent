@@ -130,6 +130,123 @@ class EthercatDeviceListResponse(BaseModel):
     items: list[EthercatDeviceRead]
 
 
+EquipmentDataSeverity = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+AlarmEventStatus = Literal["ACTIVE", "ACKNOWLEDGED", "CLEARED"]
+
+
+class CreateEquipmentAlarmEventRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    equipment_id: uuid.UUID | None = None
+    equipment_code: str | None = Field(default=None, min_length=1, max_length=80)
+    source_event_id: str | None = Field(default=None, max_length=160)
+    alarm_code: str = Field(min_length=1, max_length=80)
+    alarm_name: str | None = Field(default=None, max_length=240)
+    severity: EquipmentDataSeverity
+    event_status: AlarmEventStatus = "ACTIVE"
+    occurred_at: datetime
+    source_system: str = Field(min_length=1, max_length=120)
+    raw_payload: dict[str, Any] = Field(default_factory=dict)
+    diagnosis_session_id: uuid.UUID | None = None
+
+
+class EquipmentAlarmEventRead(BaseModel):
+    id: uuid.UUID
+    equipment_id: uuid.UUID
+    equipment_code: str
+    source_event_id: str | None = None
+    alarm_code: str
+    alarm_name: str | None = None
+    severity: EquipmentDataSeverity
+    event_status: AlarmEventStatus
+    occurred_at: datetime
+    received_at: datetime
+    source_system: str
+    raw_payload: dict[str, Any]
+    diagnosis_session_id: uuid.UUID | None = None
+
+
+class EquipmentAlarmEventListResponse(BaseModel):
+    items: list[EquipmentAlarmEventRead]
+    total: int
+    limit: int
+    offset: int
+
+
+class CreateEquipmentIOSnapshotRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    equipment_id: uuid.UUID | None = None
+    equipment_code: str | None = Field(default=None, min_length=1, max_length=80)
+    source_snapshot_id: str | None = Field(default=None, max_length=160)
+    captured_at: datetime
+    source_system: str = Field(min_length=1, max_length=120)
+    observed_inputs: dict[str, Any] = Field(default_factory=dict)
+    observed_outputs: dict[str, Any] = Field(default_factory=dict)
+    raw_payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class EquipmentIOSnapshotRead(BaseModel):
+    id: uuid.UUID
+    equipment_id: uuid.UUID
+    equipment_code: str
+    source_snapshot_id: str | None = None
+    captured_at: datetime
+    received_at: datetime
+    source_system: str
+    observed_inputs: dict[str, Any]
+    observed_outputs: dict[str, Any]
+    raw_payload: dict[str, Any]
+
+
+class EquipmentIOSnapshotListResponse(BaseModel):
+    items: list[EquipmentIOSnapshotRead]
+    total: int
+    limit: int
+    offset: int
+
+
+class CreateEquipmentEthercatStatusSnapshotRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    equipment_id: uuid.UUID | None = None
+    equipment_code: str | None = Field(default=None, min_length=1, max_length=80)
+    source_snapshot_id: str | None = Field(default=None, max_length=160)
+    captured_at: datetime
+    source_system: str = Field(min_length=1, max_length=120)
+    master_state: str = Field(min_length=1, max_length=40)
+    slave_count: int = Field(ge=0)
+    working_counter: int | None = Field(default=None, ge=0)
+    link_status: str = Field(min_length=1, max_length=80)
+    error_code: str | None = Field(default=None, max_length=120)
+    error_summary: str | None = None
+    raw_payload: dict[str, Any] = Field(default_factory=dict)
+
+
+class EquipmentEthercatStatusSnapshotRead(BaseModel):
+    id: uuid.UUID
+    equipment_id: uuid.UUID
+    equipment_code: str
+    source_snapshot_id: str | None = None
+    captured_at: datetime
+    received_at: datetime
+    source_system: str
+    master_state: str
+    slave_count: int
+    working_counter: int | None = None
+    link_status: str
+    error_code: str | None = None
+    error_summary: str | None = None
+    raw_payload: dict[str, Any]
+
+
+class EquipmentEthercatStatusSnapshotListResponse(BaseModel):
+    items: list[EquipmentEthercatStatusSnapshotRead]
+    total: int
+    limit: int
+    offset: int
+
+
 class EvidenceRead(BaseModel):
     id: str
     type: str
