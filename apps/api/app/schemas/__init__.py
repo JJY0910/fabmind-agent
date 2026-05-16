@@ -13,6 +13,7 @@ from app.schemas.domain import (
     ChecklistRunRead,
     ChecklistRunSummary,
     CreateDiagnosisSessionRequest,
+    CreateIncidentRequest,
     DashboardRecentDiagnosisSession,
     DashboardRequiredAction,
     DashboardSummaryResponse,
@@ -37,6 +38,7 @@ from app.schemas.domain import (
     EvidenceRead,
     EvidenceLinkRead,
     IncidentListResponse,
+    IncidentStatus,
     IncidentSummary,
     InspectionPlanItemRead,
     IoPointListResponse,
@@ -53,6 +55,8 @@ from app.schemas.domain import (
     SystemSafetySettingsResponse,
     TenantRead,
     UpdateChecklistItemRequest,
+    UpdateIncidentLinksRequest,
+    UpdateIncidentStatusRequest,
     UserRead,
 )
 
@@ -71,6 +75,7 @@ __all__ = [
     "ChecklistRunRead",
     "ChecklistRunSummary",
     "CreateDiagnosisSessionRequest",
+    "CreateIncidentRequest",
     "DashboardRecentDiagnosisSession",
     "DashboardRequiredAction",
     "DashboardSummaryResponse",
@@ -95,6 +100,7 @@ __all__ = [
     "EvidenceRead",
     "EvidenceLinkRead",
     "IncidentListResponse",
+    "IncidentStatus",
     "IncidentSummary",
     "InspectionPlanItemRead",
     "IoPointListResponse",
@@ -114,5 +120,7 @@ __all__ = [
     "SystemSafetySettingsResponse",
     "TenantRead",
     "UpdateChecklistItemRequest",
+    "UpdateIncidentLinksRequest",
+    "UpdateIncidentStatusRequest",
     "UserRead",
 ]

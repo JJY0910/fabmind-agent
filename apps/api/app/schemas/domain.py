@@ -530,22 +530,66 @@ class ApprovalQueueResponse(BaseModel):
     offset: int
 
 
+IncidentStatus = Literal[
+    "OPEN",
+    "TRIAGED",
+    "CHECKLIST_IN_PROGRESS",
+    "REPORT_SUBMITTED",
+    "APPROVED",
+    "CLOSED",
+    "CANCELLED",
+]
+
+
+class CreateIncidentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    equipment_id: uuid.UUID | None = None
+    equipment_code: str | None = Field(default=None, min_length=1, max_length=80)
+    primary_alarm_event_id: uuid.UUID | None = None
+    diagnosis_session_id: uuid.UUID | None = None
+    title: str = Field(min_length=1, max_length=240)
+    summary: str = Field(min_length=1)
+    alarm_code: str = Field(min_length=1, max_length=80)
+    severity: RiskLevel
+    assigned_role: str | None = Field(default="FIELD_ENGINEER", max_length=80)
+
+
+class UpdateIncidentStatusRequest(BaseModel):
+    status: IncidentStatus
+
+
+class UpdateIncidentLinksRequest(BaseModel):
+    diagnosis_session_id: uuid.UUID | None = None
+    checklist_run_id: uuid.UUID | None = None
+    report_draft_id: uuid.UUID | None = None
+    approval_id: uuid.UUID | None = None
+
+
 class IncidentSummary(BaseModel):
     incident_id: uuid.UUID
     equipment_id: uuid.UUID
     equipment_code: str
+    case_number: str | None = None
+    primary_alarm_event_id: uuid.UUID | None = None
     alarm_code: str
     title: str
     summary: str
     risk_level: RiskLevel
-    status: str
+    status: IncidentStatus
     opened_at: datetime
     updated_at: datetime
-    owner: str
-    assigned_role: str
-    diagnosis_session_id: uuid.UUID
+    triaged_at: datetime | None = None
+    checklist_started_at: datetime | None = None
+    report_submitted_at: datetime | None = None
+    approved_at: datetime | None = None
+    closed_at: datetime | None = None
+    owner: str | None = None
+    assigned_role: str | None = None
+    diagnosis_session_id: uuid.UUID | None = None
     linked_checklist_run_id: uuid.UUID | None = None
     linked_report_draft_id: uuid.UUID | None = None
+    linked_approval_id: uuid.UUID | None = None
 
 
 class IncidentListResponse(BaseModel):

@@ -301,6 +301,34 @@ CREATE TABLE report_approvals (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE equipment_incidents (
+  id UUID PRIMARY KEY,
+  tenant_id UUID NOT NULL REFERENCES tenants(id),
+  equipment_id UUID NOT NULL REFERENCES equipment(id),
+  primary_alarm_event_id UUID REFERENCES equipment_alarm_events(id),
+  diagnosis_session_id UUID REFERENCES diagnosis_sessions(id),
+  checklist_run_id UUID REFERENCES checklist_runs(id),
+  report_draft_id UUID REFERENCES report_drafts(id),
+  approval_id UUID REFERENCES report_approvals(id),
+  case_number TEXT NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  alarm_code TEXT NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL')),
+  status TEXT NOT NULL CHECK (status IN ('OPEN','TRIAGED','CHECKLIST_IN_PROGRESS','REPORT_SUBMITTED','APPROVED','CLOSED','CANCELLED')) DEFAULT 'OPEN',
+  owner_user_id UUID REFERENCES users(id),
+  assigned_role TEXT,
+  opened_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  triaged_at TIMESTAMPTZ,
+  checklist_started_at TIMESTAMPTZ,
+  report_submitted_at TIMESTAMPTZ,
+  approved_at TIMESTAMPTZ,
+  closed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, case_number)
+);
+
 CREATE TABLE policy_violations (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
@@ -346,5 +374,9 @@ CREATE INDEX idx_checklist_items_run ON checklist_items(checklist_run_id);
 CREATE INDEX idx_report_drafts_tenant_session ON report_drafts(tenant_id, diagnosis_session_id);
 CREATE INDEX idx_report_drafts_tenant_status ON report_drafts(tenant_id, status);
 CREATE INDEX idx_report_approvals_report ON report_approvals(tenant_id, report_draft_id);
+CREATE INDEX idx_equipment_incidents_tenant_status_updated ON equipment_incidents(tenant_id, status, updated_at DESC);
+CREATE INDEX idx_equipment_incidents_equipment ON equipment_incidents(tenant_id, equipment_id);
+CREATE INDEX idx_equipment_incidents_alarm_code ON equipment_incidents(tenant_id, alarm_code);
+CREATE INDEX idx_equipment_incidents_primary_alarm ON equipment_incidents(tenant_id, primary_alarm_event_id);
 CREATE INDEX idx_audit_events_tenant_created ON audit_events(tenant_id, created_at DESC);
 CREATE INDEX idx_document_chunks_embedding ON document_chunks USING ivfflat (embedding vector_cosine_ops);

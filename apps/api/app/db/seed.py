@@ -15,6 +15,7 @@ from app.models import (
     AuditEvent,
     Equipment,
     EquipmentFamily,
+    EquipmentIncident,
     EthercatDevice,
     IoPoint,
     Line,
@@ -64,6 +65,7 @@ def seed_database(session: Session, seed_dir: Path | None = None) -> SeedSummary
     alarm_codes = _seed_alarm_codes(session, tenant, family, source_dir / "alarm_codes_seed.csv")
     io_points = _seed_io_points(session, tenant, equipment, source_dir / "io_points_seed.csv")
     audit_events = _seed_audit_event(session, tenant, users, core["audit_event"])
+    _seed_representative_incident(session, tenant, users, equipment)
 
     session.commit()
 
@@ -276,6 +278,29 @@ def _seed_audit_event(session: Session, tenant: Tenant, users: dict[str, User], 
     return 1
 
 
+def _seed_representative_incident(
+    session: Session,
+    tenant: Tenant,
+    users: dict[str, User],
+    equipment: dict[str, Equipment],
+) -> None:
+    incident = EquipmentIncident(
+        id=deterministic_uuid("incident", tenant.code, "LP-01-BASELINE"),
+        tenant_id=tenant.id,
+        equipment_id=equipment["LP-01"].id,
+        case_number="INC-LP-01-BASELINE",
+        title="LP-01 FOUP clamp evidence review",
+        summary="Representative operational incident for Load Port FOUP clamp and EtherCAT I/O evidence tracking.",
+        alarm_code="LP-CLAMP-014",
+        severity="MEDIUM",
+        status="OPEN",
+        owner_user_id=users["field"].id,
+        assigned_role="FIELD_ENGINEER",
+    )
+    session.merge(incident)
+    session.flush()
+
+
 def _to_bool(value: str | None) -> bool | None:
     if value is None or value == "":
         return None
@@ -284,4 +309,3 @@ def _to_bool(value: str | None) -> bool | None:
 
 def get_seeded_tenant_id(session: Session) -> uuid.UUID:
     return session.scalar(select(Tenant.id).where(Tenant.code == "FABMIND_DEMO"))
-
