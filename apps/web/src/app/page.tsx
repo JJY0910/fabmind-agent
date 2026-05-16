@@ -63,7 +63,7 @@ export default function HomePage() {
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <PlayCircle className="w-6 h-6 text-[#00e5ff]" />
-              Golden Path Demo: Load Port FOUP Clamp Alarm
+              Operational Workflow: Load Port FOUP Clamp Alarm
             </h2>
             <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
               Follow one complete evidence-based troubleshooting workflow from alarm triage to senior approval and audit review.

@@ -66,7 +66,7 @@ Required screens:
 10. Audit console
 
 Every screen must have loading, empty, error, and success states.
-Do not connect fake random data. Use deterministic seed contracts.
+Do not connect unvalidated random data. Use deterministic seed contracts.
 Capture screenshots after implementation.
 ```
 

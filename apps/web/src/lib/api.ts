@@ -102,3 +102,56 @@ export async function rejectReportDraft(reportDraftId: string, payload: { commen
   if (!res.ok) throw new Error('Failed to reject report draft');
   return res.json();
 }
+
+export async function fetchEquipmentList(params?: Record<string, string>) {
+  const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+  const res = await fetch(`${BASE_URL}/api/v1/equipment${query}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch equipment list');
+  return res.json();
+}
+
+export async function fetchEquipmentDetail(equipmentId: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/equipment/${equipmentId}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch equipment detail');
+  return res.json();
+}
+
+export async function fetchIncidentList(params?: Record<string, string>) {
+  const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+  const res = await fetch(`${BASE_URL}/api/v1/incidents${query}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch incident list');
+  return res.json();
+}
+
+export async function fetchIncidentDetail(incidentId: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/incidents/${incidentId}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch incident detail');
+  return res.json();
+}
+
+export async function fetchChecklistRunList(params?: Record<string, string>) {
+  const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+  const res = await fetch(`${BASE_URL}/api/v1/checklist-runs${query}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch checklist run list');
+  return res.json();
+}
+
+export async function fetchReportDraftList(params?: Record<string, string>) {
+  const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+  const res = await fetch(`${BASE_URL}/api/v1/report-drafts${query}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch report draft list');
+  return res.json();
+}
+
+export async function fetchApprovalQueue(params?: Record<string, string>) {
+  const query = params ? `?${new URLSearchParams(params).toString()}` : '';
+  const res = await fetch(`${BASE_URL}/api/v1/approvals${query}`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch approval queue');
+  return res.json();
+}
+
+export async function fetchSystemSafetySettings() {
+  const res = await fetch(`${BASE_URL}/api/v1/system/safety-settings`, { headers: getHeaders() });
+  if (!res.ok) throw new Error('Failed to fetch system safety settings');
+  return res.json();
+}
