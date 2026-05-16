@@ -154,6 +154,11 @@ export default function ChecklistRunnerPage() {
             </div>
             <div className="w-px h-4 bg-[#1a2c4d]" />
             <div className="flex items-center gap-2 text-slate-300">
+              <FileText className="w-4 h-4 text-slate-400" />
+              <span className="font-mono text-slate-300">Run ID: <span className="text-[#00e5ff]">{data.id}</span></span>
+            </div>
+            <div className="w-px h-4 bg-[#1a2c4d]" />
+            <div className="flex items-center gap-2 text-slate-300">
               <User className="w-4 h-4 text-slate-400" />
               <span>Assigned: {data.created_by_user_id}</span>
             </div>
