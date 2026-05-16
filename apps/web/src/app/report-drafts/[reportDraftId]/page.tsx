@@ -141,6 +141,10 @@ export default function ReportDraftPage() {
           </div>
           <div className="flex items-center gap-4 text-sm text-slate-400">
             <div className="flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-[#00e5ff]" />
+              <span className="font-mono">{data.id}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
               <Database className="w-4 h-4 text-[#00e5ff]" />
               <span className="font-mono">LP-01 (Load Port / FOUP Clamp)</span>
             </div>

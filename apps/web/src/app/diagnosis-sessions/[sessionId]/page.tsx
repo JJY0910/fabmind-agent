@@ -127,6 +127,10 @@ export default function DiagnosisSessionPage() {
             </CardHeader>
             <CardContent className="pt-4 space-y-4">
               <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">Session ID</span>
+                <span className="text-sm font-mono text-[#00e5ff] bg-[#00e5ff]/10 px-2 py-0.5 rounded">{session.id}</span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500">Equipment</span>
                 <span className="text-sm font-mono text-white bg-[#1a2c4d] px-2 py-0.5 rounded">{session.equipment_id}</span>
               </div>

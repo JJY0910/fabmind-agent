@@ -218,14 +218,24 @@ def test_openapi_contract_contains_implemented_pr20_paths():
     text = contract.read_text(encoding="utf-8")
 
     for path in (
-        "/api/v1/incidents:",
-        "/api/v1/incidents/{incident_id}:",
-        "/api/v1/checklist-runs:",
-        "/api/v1/report-drafts:",
-        "/api/v1/approvals:",
-        "/api/v1/system/safety-settings:",
+        "/api/v1/equipment",
+        "/api/v1/equipment/{equipment_id}",
+        "/api/v1/incidents",
+        "/api/v1/incidents/{incident_id}",
+        "/api/v1/checklist-runs",
+        "/api/v1/report-drafts",
+        "/api/v1/approvals",
+        "/api/v1/system/safety-settings",
     ):
-        assert path in text
+        assert f"  {path}:" in text
+        assert "get" in _path_methods(text, path)
+
+
+def test_openapi_contract_keeps_system_safety_settings_read_only():
+    contract = Path(__file__).resolve().parents[3] / "contracts" / "openapi.yaml"
+    text = contract.read_text(encoding="utf-8")
+
+    assert _path_methods(text, "/api/v1/system/safety-settings") == {"get"}
 
 
 def _create_analyzed_session(client: TestClient, session: Session, token: str) -> str:
@@ -296,6 +306,24 @@ def _login(client: TestClient, username: str, password: str) -> str:
 
 def _auth_header(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+def _path_methods(text: str, path: str) -> set[str]:
+    lines = text.splitlines()
+    try:
+        start = lines.index(f"  {path}:")
+    except ValueError as exc:
+        raise AssertionError(f"Missing OpenAPI path: {path}") from exc
+
+    methods: set[str] = set()
+    for line in lines[start + 1 :]:
+        if line.startswith("  /") or line.startswith("components:"):
+            break
+        if line.startswith("    ") and not line.startswith("      "):
+            method = line.strip().rstrip(":")
+            if method in {"get", "post", "put", "patch", "delete"}:
+                methods.add(method)
+    return methods
 
 
 def _tenant(session: Session) -> Tenant:
