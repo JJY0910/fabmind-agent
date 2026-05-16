@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, LayoutDashboard, ShieldAlert, CheckSquare, FileText, Settings, Factory } from "lucide-react";
+import { Activity, LayoutDashboard, ShieldAlert, CheckSquare, FileText, Settings, Factory, History } from "lucide-react";
 
 export function Sidebar() {
   return (
@@ -38,6 +38,10 @@ export function Sidebar() {
         </Link>
 
         <div className="text-xs font-semibold text-slate-500 mt-8 mb-4 px-2 tracking-wider">SYSTEM</div>
+        <Link href="/audit-events" className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#111d33] text-slate-400 hover:text-slate-200 rounded-md transition-colors group">
+          <History className="w-4 h-4 group-hover:text-[#00e5ff] transition-colors" />
+          <span className="font-medium text-sm">Audit Console</span>
+        </Link>
         <Link href="/settings" className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#111d33] text-slate-400 hover:text-slate-200 rounded-md transition-colors">
           <Settings className="w-4 h-4" />
           <span className="font-medium text-sm">Settings</span>

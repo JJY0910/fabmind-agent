@@ -1,6 +1,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Clock, Activity, FileText, Microscope, ShieldAlert, Cpu } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Activity, FileText, Microscope, ShieldAlert, Cpu, CheckSquare } from "lucide-react";
 import Link from "next/link";
+
+const mockSummary = {
+  active_diagnosis_count: 7,
+  pending_approval_count: 3,
+  high_risk_count: 1,
+  evidence_linked_rate: 98.5,
+  open_checklist_count: 12,
+  submitted_report_count: 4,
+  approved_report_count: 156,
+  recent_diagnosis_sessions: [
+    { session_id: 'LP-01-SESSION', equipment_code: 'LP-01', alarm_code: 'LP-CLAMP-014', status: 'ANALYSIS_READY', risk_level: 'LOW', created_at: new Date(Date.now() - 600000).toISOString(), desc: 'Clamp 완료 센서 위치 이탈' },
+    { session_id: 'LP-02-SESSION', equipment_code: 'LP-02', alarm_code: 'ECAT-STATE-021', status: 'ANALYZING', risk_level: 'HIGH', created_at: new Date(Date.now() - 3600000).toISOString(), desc: 'EtherCAT Slave PRE-OP 고착' },
+    { session_id: 'FC-11-SESSION', equipment_code: 'FC-11', alarm_code: 'FC-INTERLOCK-03', status: 'CLOSED', risk_level: 'LOW', created_at: new Date(Date.now() - 10800000).toISOString(), desc: '도어 닫힘 상태 불량' }
+  ],
+  required_actions: [
+    { action_type: 'APPROVAL_REQUIRED', resource_type: 'REPORT_DRAFT', resource_id: 'RPT-092', title: 'EtherCAT OP 강제 전환을 위한 Servo Reset 권한 요청 (Engineer Kim)', severity: 'HIGH' }
+  ],
+  guardrail_blocks_today: 3
+};
 
 export default function HomePage() {
   return (
@@ -18,7 +37,7 @@ export default function HomePage() {
       </div>
 
       {/* System Status Panel (Metrics) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="border-[#00e5ff]/30 bg-[#00e5ff]/5 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#00e5ff]/10 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform" />
           <CardContent className="p-6">
@@ -26,8 +45,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-[#00e5ff]">Active Diagnosis</p>
               <Activity className="h-4 w-4 text-[#00e5ff]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">7</div>
-            <p className="text-xs text-slate-400 mt-1">2 critical priority</p>
+            <div className="text-3xl font-bold text-white mt-2">{mockSummary.active_diagnosis_count}</div>
           </CardContent>
         </Card>
 
@@ -37,22 +55,17 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Pending Approval</p>
               <Clock className="h-4 w-4 text-[#ffaa00]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">3</div>
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ffaa00] inline-block animate-pulse"></span>
-              Requires Senior Sign-off
-            </p>
+            <div className="text-3xl font-bold text-white mt-2">{mockSummary.pending_approval_count}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between space-y-0 pb-2">
-              <p className="text-sm font-medium text-slate-400">High Risk Actions</p>
+              <p className="text-sm font-medium text-slate-400">High Risk Active</p>
               <ShieldAlert className="h-4 w-4 text-[#ff3366]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">1</div>
-            <p className="text-xs text-[#ff3366]/80 mt-1">Policy blocked intervention</p>
+            <div className="text-3xl font-bold text-white mt-2">{mockSummary.high_risk_count}</div>
           </CardContent>
         </Card>
 
@@ -63,8 +76,45 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Evidence Linked</p>
               <FileText className="h-4 w-4 text-[#00cc66]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">98%</div>
-            <p className="text-xs text-slate-400 mt-1">Traceability maintained</p>
+            <div className="text-3xl font-bold text-white mt-2">{mockSummary.evidence_linked_rate}%</div>
+          </CardContent>
+        </Card>
+
+        {/* Second Row of Metrics */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between space-y-0 pb-2">
+              <p className="text-sm font-medium text-slate-400">Open Checklists</p>
+              <CheckSquare className="h-4 w-4 text-slate-500" />
+            </div>
+            <div className="text-2xl font-bold text-white mt-2">{mockSummary.open_checklist_count}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between space-y-0 pb-2">
+              <p className="text-sm font-medium text-slate-400">Submitted Reports</p>
+              <FileText className="h-4 w-4 text-[#ffaa00]" />
+            </div>
+            <div className="text-2xl font-bold text-white mt-2">{mockSummary.submitted_report_count}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between space-y-0 pb-2">
+              <p className="text-sm font-medium text-slate-400">Approved Reports</p>
+              <CheckCircle2 className="h-4 w-4 text-[#00cc66]" />
+            </div>
+            <div className="text-2xl font-bold text-white mt-2">{mockSummary.approved_report_count}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between space-y-0 pb-2">
+              <p className="text-sm font-medium text-slate-400">Guardrail Blocks (Today)</p>
+              <AlertCircle className="h-4 w-4 text-[#ff3366]" />
+            </div>
+            <div className="text-2xl font-bold text-white mt-2">{mockSummary.guardrail_blocks_today}</div>
           </CardContent>
         </Card>
       </div>
@@ -85,49 +135,49 @@ export default function HomePage() {
 
           <Card className="border-[#1a2c4d] overflow-hidden">
             <div className="divide-y divide-[#1a2c4d]">
-              {[
-                { eq: 'LP-01', alarm: 'LP-CLAMP-014', time: '10 mins ago', status: 'Analysis Complete', risk: 'Low', color: 'text-[#00cc66]', desc: 'Clamp 완료 센서 위치 이탈' },
-                { eq: 'LP-02', alarm: 'ECAT-STATE-021', time: '1 hour ago', status: 'Pending Approval', risk: 'High', color: 'text-[#ffaa00]', desc: 'EtherCAT Slave PRE-OP 고착' },
-                { eq: 'FC-11', alarm: 'FC-INTERLOCK-03', time: '3 hours ago', status: 'Resolved', risk: 'Low', color: 'text-slate-500', desc: '도어 닫힘 상태 불량' },
-              ].map((item, i) => {
+              {mockSummary.recent_diagnosis_sessions.map((item, i) => {
+                const isGoldenPath = item.equipment_code === 'LP-01';
+                const statusColor = item.status === 'CLOSED' ? 'text-slate-500' : 'text-[#00cc66]';
+
                 const content = (
-                  <div className="p-4 hover:bg-[#111d33] transition-colors flex items-center justify-between group">
+                  <div className="p-4 hover:bg-[#111d33] transition-colors flex items-center justify-between group cursor-pointer">
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center gap-3">
-                        <span className="font-mono text-white text-xs bg-[#1a2c4d] px-2 py-0.5 rounded border border-[#1a2c4d] group-hover:border-[#00e5ff]/30 transition-colors">{item.eq}</span>
-                        <span className="font-mono text-[#00e5ff] text-sm font-medium">{item.alarm}</span>
+                        <span className="font-mono text-white text-xs bg-[#1a2c4d] px-2 py-0.5 rounded border border-[#1a2c4d] group-hover:border-[#00e5ff]/30 transition-colors">{item.equipment_code}</span>
+                        <span className="font-mono text-[#00e5ff] text-sm font-medium">{item.alarm_code}</span>
                       </div>
                       <span className="text-sm text-slate-300">{item.desc}</span>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <span className={`text-sm font-medium ${item.color}`}>
-                        {item.status}
+                      <span className={`text-sm font-medium ${statusColor}`}>
+                        {item.status.replace('_', ' ')}
                       </span>
                       <div className="flex items-center gap-3">
                         <span className={`text-[10px] uppercase tracking-wider font-bold border px-2 py-0.5 rounded-full ${
-                          item.risk === 'High' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' :
+                          item.risk_level === 'HIGH' ? 'border-[#ff3366]/30 text-[#ff3366] bg-[#ff3366]/10' :
                           'border-slate-700 text-slate-400 bg-slate-800/50'
                         }`}>
-                          {item.risk} Risk
+                          {item.risk_level} Risk
                         </span>
                         <span className="text-xs text-slate-500 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {item.time}
+                          <Clock className="w-3 h-3" />
+                          {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </span>
                       </div>
                     </div>
                   </div>
                 );
 
-                if (item.eq === 'LP-01') {
+                if (isGoldenPath) {
                   return (
-                    <Link key={i} href="/diagnosis-sessions/LP-01-SESSION" className="block outline-none focus:ring-2 focus:ring-[#00e5ff] rounded-t-lg">
+                    <Link key={i} href={`/diagnosis-sessions/${item.session_id}`} className="block outline-none focus:ring-2 focus:ring-[#00e5ff] rounded-t-lg">
                       {content}
                     </Link>
                   );
                 }
 
                 return (
-                  <div key={i} className="cursor-pointer">
+                  <div key={i}>
                     {content}
                   </div>
                 );
@@ -146,39 +196,41 @@ export default function HomePage() {
               Required Actions
             </h2>
 
-            <Card className="border-[#ffaa00]/30 bg-[#ffaa00]/5 shadow-[0_0_15px_rgba(255,170,0,0.05)]">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm text-[#ffaa00] flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4" />
-                  Pending Approvals (1)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-[#0a1322] border border-[#1a2c4d] p-3.5 rounded-lg">
-                  <div className="flex items-center justify-between mb-2 border-b border-[#1a2c4d] pb-2">
-                    <span className="font-mono text-xs text-[#00e5ff] bg-[#00e5ff]/10 px-2 py-0.5 rounded">LP-02</span>
-                    <span className="text-[10px] font-mono bg-[#1a2c4d] px-2 py-0.5 rounded text-slate-300">ACTION: SERVO_RESET</span>
+            {mockSummary.required_actions.map((action, i) => (
+              <Card key={i} className="border-[#ffaa00]/30 bg-[#ffaa00]/5 shadow-[0_0_15px_rgba(255,170,0,0.05)]">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm text-[#ffaa00] flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4" />
+                    Pending Approval (1)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-[#0a1322] border border-[#1a2c4d] p-3.5 rounded-lg">
+                    <div className="flex items-center justify-between mb-2 border-b border-[#1a2c4d] pb-2">
+                      <span className="font-mono text-xs text-[#00e5ff] bg-[#00e5ff]/10 px-2 py-0.5 rounded">{action.resource_id}</span>
+                      <span className="text-[10px] font-mono bg-[#1a2c4d] px-2 py-0.5 rounded text-slate-300">TYPE: {action.action_type}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                      {action.title}
+                    </p>
+                    <div className="flex gap-2">
+                      <button className="flex-1 bg-[#ffaa00] hover:bg-[#ffaa00]/90 text-black text-xs font-bold py-2 rounded transition-colors shadow-sm">
+                        Review Request
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-                    EtherCAT OP 강제 전환을 위한 Servo Reset 권한 요청 (Engineer Kim)
-                  </p>
-                  <div className="flex gap-2">
-                    <button className="flex-1 bg-[#ffaa00] hover:bg-[#ffaa00]/90 text-black text-xs font-bold py-2 rounded transition-colors shadow-sm">
-                      Review Request
-                    </button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {/* Guardrails */}
+          {/* Guardrails Dashboard Component remains as visual anchor */}
           <div className="space-y-4">
             <Card className="bg-[#050b14]">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm text-slate-300 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-[#ff3366]" />
-                  Guardrail Blocks (Today)
+                  Recent Guardrail Blocks
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -190,9 +242,9 @@ export default function HomePage() {
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono">Agent Response: Action Denied.</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                    <span>Total prevented:</span>
-                    <span className="text-white font-medium bg-[#1a2c4d] px-2 py-0.5 rounded">3 instances</span>
+                  <div className="flex justify-between items-center text-xs pt-1">
+                    <span className="text-slate-400">See full log in Audit Console</span>
+                    <Link href="/audit-events" className="text-[#00e5ff] hover:underline">View Audit Log</Link>
                   </div>
                 </div>
               </CardContent>
