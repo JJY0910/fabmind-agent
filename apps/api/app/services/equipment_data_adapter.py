@@ -16,6 +16,7 @@ from app.models import (
     User,
 )
 from app.services.audit import create_audit_event
+from app.services.incidents import create_or_link_incident_from_alarm_event
 
 
 class EquipmentDataAdapterError(ValueError):
@@ -115,6 +116,7 @@ class ReadOnlyEquipmentDataAdapter:
                 "source_system": event.source_system,
             },
         )
+        create_or_link_incident_from_alarm_event(self.db, actor=actor, event=event, equipment=equipment)
         self.db.flush()
         return event
 

@@ -82,7 +82,7 @@ def test_equipment_registry_filter_by_status(client_and_session: tuple[TestClien
     assert body["items"][0]["equipment_code"] == "LP-02"
 
 
-def test_active_incidents_list_and_detail_derive_from_diagnosis_sessions(
+def test_active_incidents_list_and_detail_use_first_class_incident_case(
     client_and_session: tuple[TestClient, Session],
 ):
     client, session = client_and_session
@@ -100,15 +100,15 @@ def test_active_incidents_list_and_detail_derive_from_diagnosis_sessions(
     body = response.json()
     assert body["total"] == 1
     incident = body["items"][0]
-    assert incident["incident_id"] == session_id
     assert incident["equipment_code"] == "LP-01"
     assert incident["alarm_code"] == "LP-CLAMP-014"
     assert incident["risk_level"] == "HIGH"
-    assert incident["status"] == "CREATED"
+    assert incident["status"] == "OPEN"
+    assert incident["diagnosis_session_id"] == session_id
     assert incident["linked_checklist_run_id"] is None
     assert incident["linked_report_draft_id"] is None
 
-    detail = client.get(f"/api/v1/incidents/{session_id}", headers=_auth_header(token))
+    detail = client.get(f"/api/v1/incidents/{incident['incident_id']}", headers=_auth_header(token))
     assert detail.status_code == 200
     assert detail.json()["diagnosis_session_id"] == session_id
 

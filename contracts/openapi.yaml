@@ -215,20 +215,26 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/incidents:
     get:
-      summary: List active incidents derived from diagnosis sessions
+      summary: List tenant-scoped equipment incidents
       parameters:
         - name: status
           in: query
-          schema: { type: string }
+          schema: { type: string, enum: [OPEN, TRIAGED, CHECKLIST_IN_PROGRESS, REPORT_SUBMITTED, APPROVED, CLOSED, CANCELLED] }
         - name: equipment_id
           in: query
           schema: { type: string }
         - name: equipment_code
           in: query
           schema: { type: string }
+        - name: severity
+          in: query
+          schema: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
         - name: risk_level
           in: query
           schema: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        - name: alarm_code
+          in: query
+          schema: { type: string }
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
@@ -244,6 +250,24 @@ paths:
                 $ref: '#/components/schemas/IncidentListResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      summary: Create equipment incident case from read-only evidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncidentRequest'
+      responses:
+        '201':
+          description: Incident created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentSummary'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/incidents/{incident_id}:
     get:
       summary: Get incident detail
@@ -255,6 +279,55 @@ paths:
       responses:
         '200':
           description: Incident detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentSummary'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/incidents/{incident_id}/status:
+    patch:
+      summary: Transition equipment incident status
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIncidentStatusRequest'
+      responses:
+        '200':
+          description: Incident status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentSummary'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/incidents/{incident_id}/links:
+    patch:
+      summary: Link incident to diagnosis, checklist, report, or approval records
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIncidentLinksRequest'
+      responses:
+        '200':
+          description: Incident links updated
           content:
             application/json:
               schema:
@@ -1292,6 +1365,33 @@ components:
       required: [comment]
       properties:
         comment: { type: string }
+    CreateIncidentRequest:
+      type: object
+      required: [title, summary, alarm_code, severity]
+      properties:
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        primary_alarm_event_id: { type: string }
+        diagnosis_session_id: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        alarm_code: { type: string }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        assigned_role: { type: string }
+    UpdateIncidentStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [OPEN, TRIAGED, CHECKLIST_IN_PROGRESS, REPORT_SUBMITTED, APPROVED, CLOSED, CANCELLED]
+    UpdateIncidentLinksRequest:
+      type: object
+      properties:
+        diagnosis_session_id: { type: string }
+        checklist_run_id: { type: string }
+        report_draft_id: { type: string }
+        approval_id: { type: string }
     IncidentSummary:
       type: object
       required:
@@ -1305,25 +1405,32 @@ components:
         - status
         - opened_at
         - updated_at
-        - owner
-        - assigned_role
-        - diagnosis_session_id
       properties:
         incident_id: { type: string }
         equipment_id: { type: string }
         equipment_code: { type: string }
+        case_number: { type: string }
+        primary_alarm_event_id: { type: string }
         alarm_code: { type: string }
         title: { type: string }
         summary: { type: string }
         risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
-        status: { type: string }
+        status:
+          type: string
+          enum: [OPEN, TRIAGED, CHECKLIST_IN_PROGRESS, REPORT_SUBMITTED, APPROVED, CLOSED, CANCELLED]
         opened_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        triaged_at: { type: string, format: date-time }
+        checklist_started_at: { type: string, format: date-time }
+        report_submitted_at: { type: string, format: date-time }
+        approved_at: { type: string, format: date-time }
+        closed_at: { type: string, format: date-time }
         owner: { type: string }
         assigned_role: { type: string }
         diagnosis_session_id: { type: string }
         linked_checklist_run_id: { type: string }
         linked_report_draft_id: { type: string }
+        linked_approval_id: { type: string }
     IncidentListResponse:
       type: object
       required: [items, total, limit, offset]

@@ -122,6 +122,7 @@ class Equipment(Base):
     alarm_events: Mapped[list["EquipmentAlarmEvent"]] = relationship(back_populates="equipment")
     io_snapshots: Mapped[list["EquipmentIOSnapshot"]] = relationship(back_populates="equipment")
     ethercat_status_snapshots: Mapped[list["EquipmentEthercatStatusSnapshot"]] = relationship(back_populates="equipment")
+    incidents: Mapped[list["EquipmentIncident"]] = relationship(back_populates="equipment")
 
 
 class AlarmCode(Base):
@@ -570,3 +571,60 @@ class ReportApproval(Base):
 
     report_draft: Mapped[ReportDraft] = relationship(back_populates="approvals")
     approver: Mapped[User] = relationship()
+
+
+class EquipmentIncident(Base):
+    __tablename__ = "equipment_incidents"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('OPEN','TRIAGED','CHECKLIST_IN_PROGRESS','REPORT_SUBMITTED','APPROVED','CLOSED','CANCELLED')",
+            name="ck_equipment_incidents_status",
+        ),
+        CheckConstraint("severity IN ('LOW','MEDIUM','HIGH','CRITICAL')", name="ck_equipment_incidents_severity"),
+        UniqueConstraint("tenant_id", "case_number", name="uq_equipment_incidents_tenant_case_number"),
+        Index("idx_equipment_incidents_tenant_status_updated", "tenant_id", "status", "updated_at"),
+        Index("idx_equipment_incidents_equipment", "tenant_id", "equipment_id"),
+        Index("idx_equipment_incidents_alarm_code", "tenant_id", "alarm_code"),
+        Index("idx_equipment_incidents_primary_alarm", "tenant_id", "primary_alarm_event_id"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    equipment_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("equipment.id"), nullable=False)
+    primary_alarm_event_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(),
+        ForeignKey("equipment_alarm_events.id"),
+    )
+    diagnosis_session_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("diagnosis_sessions.id"))
+    checklist_run_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("checklist_runs.id"))
+    report_draft_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("report_drafts.id"))
+    approval_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("report_approvals.id"))
+    case_number: Mapped[str] = mapped_column(String(80), nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    alarm_code: Mapped[str] = mapped_column(String(80), nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="OPEN", server_default="OPEN")
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
+    assigned_role: Mapped[str | None] = mapped_column(String(80))
+    opened_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    triaged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    checklist_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    report_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    equipment: Mapped[Equipment] = relationship(back_populates="incidents")
+    primary_alarm_event: Mapped[EquipmentAlarmEvent | None] = relationship()
+    diagnosis_session: Mapped[DiagnosisSession | None] = relationship()
+    checklist_run: Mapped[ChecklistRun | None] = relationship()
+    report_draft: Mapped[ReportDraft | None] = relationship()
+    approval: Mapped[ReportApproval | None] = relationship()
+    owner: Mapped[User | None] = relationship()

@@ -24,6 +24,7 @@ from app.schemas import (
 from app.services.agent_engine import analyze_diagnosis_session
 from app.services.audit import create_audit_event
 from app.services.checklist_runner import ChecklistRunPreconditionError, create_checklist_run_from_latest_analysis
+from app.services.incidents import create_incident_from_diagnosis_session
 from app.services.report_builder import ReportPreconditionError, create_report_draft_from_session
 
 
@@ -80,6 +81,7 @@ def create_diagnosis_session(
         severity="INFO",
         payload={"equipment_id": str(equipment.id), "alarm_code": payload.alarm_code},
     )
+    create_incident_from_diagnosis_session(db, actor=current_user, session=session, equipment=equipment)
     db.commit()
     db.refresh(session)
     return DiagnosisSessionRead.model_validate(session)
