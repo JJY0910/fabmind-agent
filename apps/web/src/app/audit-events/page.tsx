@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Search, Filter, History, User, Cpu } from "lucide-react";
 import { fetchAuditEvents } from "@/lib/api";
+import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
 
 const mockAuditEvents = [
   { id: "AE-9001", event_type: "POLICY_BLOCKED", severity: "HIGH", resource_type: "AGENT_RUN", actor: "Engineer Kim", created_at: "2026-05-16T09:45:00Z", payload: '{"action": "FORCE_OP", "reason": "SAFETY_VIOLATION"}' },
@@ -29,6 +30,10 @@ export default function AuditConsolePage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
+      <div className="mb-4">
+        <WorkflowStepper currentStep="AUDIT" />
+      </div>
+
       <div className="flex flex-col gap-2 mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
           <History className="w-8 h-8 text-[#00e5ff]" />

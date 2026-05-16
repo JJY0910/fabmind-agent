@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchReportDraft, submitReportDraft, approveReportDraft, rejectReportDraft } from "@/lib/api";
-import { 
-  FileText, ShieldCheck, Microscope, Database, AlertCircle, Clock, ChevronRight, 
-  CheckCircle2, AlertTriangle, ShieldAlert, CheckSquare, Settings, User 
+import {
+  FileText, ShieldCheck, Microscope, Database, AlertCircle, Clock, ChevronRight,
+  CheckCircle2, AlertTriangle, ShieldAlert, CheckSquare, Settings, User, History
 } from "lucide-react";
 import Link from "next/link";
+import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
 
 const mockReportDraft = {
   id: "RPT-LP-01",
@@ -45,7 +46,7 @@ export default function ReportDraftPage() {
 
   const [data, setData] = useState(mockReportDraft);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
-  
+
   // UI Role Simulator for Portfolio Demo
   const [userRole, setUserRole] = useState<"FIELD_ENGINEER" | "SENIOR_ENGINEER">("FIELD_ENGINEER");
   const [rejectReason, setRejectReason] = useState("");
@@ -69,7 +70,7 @@ export default function ReportDraftPage() {
       if (actionType === 'SUBMIT') res = await submitReportDraft(data.id);
       else if (actionType === 'APPROVE') res = await approveReportDraft(data.id, { comment: "Approved." });
       else if (actionType === 'REJECT') res = await rejectReportDraft(data.id, { comment: rejectReason });
-      
+
       if (res && res.id) {
         setData(res);
       } else {
@@ -107,14 +108,14 @@ export default function ReportDraftPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      
+
       {/* Portfolio Demo Role Switcher */}
       <div className="flex items-center justify-end mb-4 border-b border-[#1a2c4d] pb-2">
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Settings className="w-3.5 h-3.5" />
           <span>Simulate Role:</span>
-          <select 
-            value={userRole} 
+          <select
+            value={userRole}
             onChange={(e) => setUserRole(e.target.value as any)}
             className="bg-[#050b14] border border-[#1a2c4d] text-[#00e5ff] px-2 py-1 rounded outline-none focus:border-[#00e5ff]/50"
           >
@@ -124,13 +125,9 @@ export default function ReportDraftPage() {
         </div>
       </div>
 
-      {/* Breadcrumbs */}
-      <div className="flex items-center text-sm text-slate-400 gap-2 mb-2">
-        <Link href="/" className="hover:text-white transition-colors">Dashboard</Link>
-        <ChevronRight className="w-4 h-4" />
-        <Link href={`/diagnosis-sessions/${data.diagnosis_session_id}`} className="hover:text-white transition-colors">Session {data.diagnosis_session_id}</Link>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-[#00e5ff] font-mono">Report {data.id}</span>
+      {/* Stepper */}
+      <div className="mb-4">
+        <WorkflowStepper currentStep="REPORT" />
       </div>
 
       {/* Header */}
@@ -157,14 +154,22 @@ export default function ReportDraftPage() {
             </div>
           </div>
         </div>
-        <div className="text-right text-xs text-slate-500 flex flex-col gap-1">
-          <span className="flex items-center justify-end gap-1"><Clock className="w-3.5 h-3.5" /> Created: {new Date(data.created_at).toLocaleString()}</span>
-          <span>Updated: {new Date(data.updated_at).toLocaleString()}</span>
+        <div className="flex flex-col items-end gap-3">
+          <div className="text-right text-xs text-slate-500 flex flex-col gap-1">
+            <span className="flex items-center justify-end gap-1"><Clock className="w-3.5 h-3.5" /> Created: {new Date(data.created_at).toLocaleString()}</span>
+            <span>Updated: {new Date(data.updated_at).toLocaleString()}</span>
+          </div>
+          {(data.status === "APPROVED" || data.status === "REJECTED") && (
+            <Link href="/audit-events" className="flex items-center gap-2 px-4 py-2 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] text-slate-300 rounded-md text-sm font-medium transition-colors">
+              <History className="w-4 h-4 text-[#00e5ff]" />
+              View in Audit Console
+            </Link>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
-        
+
         {/* Left Column (Metadata & Context) */}
         <div className="space-y-6 lg:col-span-1">
           <Card>
@@ -247,7 +252,7 @@ export default function ReportDraftPage() {
 
         {/* Right Column (Report Content & Workflow) */}
         <div className="space-y-6 lg:col-span-2">
-          
+
           <Card className="border-[#00e5ff]/20 shadow-[0_0_20px_rgba(0,229,255,0.03)]">
             <CardHeader className="bg-[#0a1322] border-b border-[#1a2c4d]">
               <CardTitle className="text-lg text-white flex items-center gap-2">
@@ -256,7 +261,7 @@ export default function ReportDraftPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 divide-y divide-[#1a2c4d]">
-              
+
               <div className="p-5 hover:bg-[#111d33]/50 transition-colors">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Executive Summary</h3>
                 <p className="text-sm text-slate-200 leading-relaxed">{data.summary}</p>
@@ -310,11 +315,11 @@ export default function ReportDraftPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-5">
-              
+
               {data.status === "DRAFT" && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p className="text-sm text-slate-400">Report is currently a draft. Submit it to Senior Engineers for approval.</p>
-                  <button 
+                  <button
                     onClick={() => handleAction('SUBMIT')}
                     disabled={loadingAction === 'SUBMIT'}
                     className="px-6 py-2 bg-[#ffaa00] hover:bg-[#ffaa00]/90 text-black rounded-md text-sm font-bold shadow-[0_0_15px_rgba(255,170,0,0.3)] transition-all whitespace-nowrap disabled:opacity-50"
@@ -343,22 +348,22 @@ export default function ReportDraftPage() {
                     <div className="flex flex-col gap-3">
                       {showRejectInput ? (
                         <div className="flex gap-2">
-                          <input 
-                            type="text" 
+                          <input
+                            type="text"
                             value={rejectReason}
                             onChange={(e) => setRejectReason(e.target.value)}
-                            placeholder="Reason for rejection..." 
+                            placeholder="Reason for rejection..."
                             className="flex-1 bg-[#0a1322] border border-[#ff3366]/50 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff3366]"
                             autoFocus
                           />
-                          <button 
+                          <button
                             onClick={() => handleAction('REJECT')}
                             disabled={!rejectReason.trim() || loadingAction === 'REJECT'}
                             className="px-4 py-2 bg-[#ff3366] hover:bg-[#ff3366]/90 text-white rounded text-sm font-bold disabled:opacity-50"
                           >
                             Confirm Reject
                           </button>
-                          <button 
+                          <button
                             onClick={() => setShowRejectInput(false)}
                             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-sm font-medium"
                           >
@@ -367,13 +372,13 @@ export default function ReportDraftPage() {
                         </div>
                       ) : (
                         <div className="flex justify-end gap-3">
-                          <button 
+                          <button
                             onClick={() => setShowRejectInput(true)}
                             className="px-6 py-2 bg-transparent border border-[#ff3366] hover:bg-[#ff3366]/10 text-[#ff3366] rounded-md text-sm font-bold transition-all"
                           >
                             Reject
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleAction('APPROVE')}
                             disabled={loadingAction === 'APPROVE'}
                             className="px-6 py-2 bg-[#00cc66] hover:bg-[#00cc66]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,204,102,0.3)] transition-all disabled:opacity-50"
