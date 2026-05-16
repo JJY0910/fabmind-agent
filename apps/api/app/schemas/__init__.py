@@ -6,6 +6,8 @@ from app.schemas.domain import (
     AlarmCodeRead,
     AuditEventListResponse,
     AuditEventRead,
+    ChecklistItemRead,
+    ChecklistRunRead,
     CreateDiagnosisSessionRequest,
     DiagnosisSessionListResponse,
     DiagnosisSessionRead,
@@ -25,6 +27,7 @@ from app.schemas.domain import (
     RoleRead,
     SiteRead,
     TenantRead,
+    UpdateChecklistItemRequest,
     UserRead,
 )
 
@@ -36,6 +39,8 @@ __all__ = [
     "AuthUser",
     "AuditEventListResponse",
     "AuditEventRead",
+    "ChecklistItemRead",
+    "ChecklistRunRead",
     "CreateDiagnosisSessionRequest",
     "DiagnosisSessionListResponse",
     "DiagnosisSessionRead",
@@ -58,5 +63,6 @@ __all__ = [
     "RoleCode",
     "SiteRead",
     "TenantRead",
+    "UpdateChecklistItemRequest",
     "UserRead",
 ]

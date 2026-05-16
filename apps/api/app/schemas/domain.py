@@ -247,3 +247,45 @@ class AgentRunResult(BaseModel):
     hypotheses: list[DiagnosisHypothesisRead]
     evidence: list[EvidenceLinkRead]
     inspection_plan_items: list[InspectionPlanItemRead]
+
+
+ChecklistRunStatus = Literal["CREATED", "IN_PROGRESS", "COMPLETED", "BLOCKED"]
+ChecklistItemStatus = Literal["TODO", "IN_PROGRESS", "DONE", "BLOCKED", "SKIPPED"]
+
+
+class ChecklistItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    checklist_run_id: uuid.UUID
+    source_inspection_plan_item_id: uuid.UUID
+    item_order: int
+    title: str
+    description: str
+    expected_result: str | None = None
+    status: ChecklistItemStatus
+    field_note: str | None = None
+    completed_by_user_id: uuid.UUID | None = None
+    completed_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChecklistRunRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    diagnosis_session_id: uuid.UUID
+    agent_run_id: uuid.UUID
+    created_by_user_id: uuid.UUID
+    status: ChecklistRunStatus
+    created_at: datetime
+    updated_at: datetime
+    items: list[ChecklistItemRead]
+
+
+class UpdateChecklistItemRequest(BaseModel):
+    status: ChecklistItemStatus | None = None
+    field_note: str | None = None

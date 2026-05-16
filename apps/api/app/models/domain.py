@@ -235,6 +235,7 @@ class DiagnosisSession(Base):
     equipment: Mapped[Equipment] = relationship(back_populates="diagnosis_sessions")
     created_by: Mapped[User] = relationship()
     agent_runs: Mapped[list["AgentRun"]] = relationship(back_populates="session")
+    checklist_runs: Mapped[list["ChecklistRun"]] = relationship(back_populates="diagnosis_session")
 
 
 class AgentRun(Base):
@@ -266,6 +267,7 @@ class AgentRun(Base):
         back_populates="agent_run",
         order_by="InspectionPlanItem.item_order",
     )
+    checklist_runs: Mapped[list["ChecklistRun"]] = relationship(back_populates="agent_run")
 
 
 class AgentStep(Base):
@@ -349,3 +351,75 @@ class InspectionPlanItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     agent_run: Mapped[AgentRun] = relationship(back_populates="inspection_plan_items")
+    checklist_items: Mapped[list["ChecklistItem"]] = relationship(back_populates="source_inspection_plan_item")
+
+
+class ChecklistRun(Base):
+    __tablename__ = "checklist_runs"
+    __table_args__ = (
+        CheckConstraint("status IN ('CREATED','IN_PROGRESS','COMPLETED','BLOCKED')", name="ck_checklist_runs_status"),
+        Index("idx_checklist_runs_tenant_session", "tenant_id", "diagnosis_session_id"),
+        Index("idx_checklist_runs_agent_run", "tenant_id", "agent_run_id"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    diagnosis_session_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("diagnosis_sessions.id"), nullable=False)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("agent_runs.id"), nullable=False)
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="CREATED", server_default="CREATED")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    diagnosis_session: Mapped[DiagnosisSession] = relationship(back_populates="checklist_runs")
+    agent_run: Mapped[AgentRun] = relationship(back_populates="checklist_runs")
+    created_by: Mapped[User] = relationship()
+    items: Mapped[list["ChecklistItem"]] = relationship(
+        back_populates="checklist_run",
+        order_by="ChecklistItem.item_order",
+    )
+
+
+class ChecklistItem(Base):
+    __tablename__ = "checklist_items"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('TODO','IN_PROGRESS','DONE','BLOCKED','SKIPPED')",
+            name="ck_checklist_items_status",
+        ),
+        UniqueConstraint("checklist_run_id", "item_order", name="uq_checklist_items_run_order"),
+        Index("idx_checklist_items_run", "checklist_run_id"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    checklist_run_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("checklist_runs.id"), nullable=False)
+    source_inspection_plan_item_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(),
+        ForeignKey("inspection_plan_items.id"),
+        nullable=False,
+    )
+    item_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    expected_result: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="TODO", server_default="TODO")
+    field_note: Mapped[str | None] = mapped_column(Text)
+    completed_by_user_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    checklist_run: Mapped[ChecklistRun] = relationship(back_populates="items")
+    source_inspection_plan_item: Mapped[InspectionPlanItem] = relationship(back_populates="checklist_items")
+    completed_by: Mapped[User | None] = relationship()

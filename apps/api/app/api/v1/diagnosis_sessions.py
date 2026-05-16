@@ -12,6 +12,7 @@ from app.models import AgentRun, AlarmCode, DiagnosisSession, Equipment, User
 from app.schemas import (
     AgentRunResult,
     AgentStepRead,
+    ChecklistRunRead,
     CreateDiagnosisSessionRequest,
     DiagnosisHypothesisRead,
     DiagnosisSessionListResponse,
@@ -21,6 +22,7 @@ from app.schemas import (
 )
 from app.services.agent_engine import analyze_diagnosis_session
 from app.services.audit import create_audit_event
+from app.services.checklist_runner import ChecklistRunPreconditionError, create_checklist_run_from_latest_analysis
 
 
 READ_WRITE_ROLES = (ROLE_FIELD, ROLE_SENIOR, ROLE_ADMIN)
@@ -146,6 +148,37 @@ def analyze_diagnosis_session_endpoint(
     db.refresh(session)
     db.refresh(run)
     return _agent_run_response(run, session)
+
+
+@router.post("/{session_id}/checklist-runs", response_model=ChecklistRunRead, status_code=status.HTTP_201_CREATED)
+def create_checklist_run(
+    session_id: uuid.UUID,
+    current_user: User = Depends(require_roles(*READ_WRITE_ROLES)),
+    db: Session = Depends(get_db),
+) -> ChecklistRunRead:
+    session = db.scalar(
+        select(DiagnosisSession).where(
+            DiagnosisSession.id == session_id,
+            DiagnosisSession.tenant_id == current_user.tenant_id,
+        )
+    )
+    if session is None:
+        _audit_cross_tenant_session_attempt(db, current_user, session_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Diagnosis session not found")
+
+    try:
+        checklist_run = create_checklist_run_from_latest_analysis(
+            db,
+            diagnosis_session=session,
+            actor_user_id=current_user.id,
+        )
+    except ChecklistRunPreconditionError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    db.commit()
+    db.refresh(checklist_run)
+    return ChecklistRunRead.model_validate(checklist_run)
 
 
 def _audit_cross_tenant_equipment_attempt(db: Session, current_user: User, equipment_id: uuid.UUID) -> None:

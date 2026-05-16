@@ -199,21 +199,30 @@ CREATE TABLE inspection_plan_items (
 CREATE TABLE checklist_runs (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
-  session_id UUID NOT NULL REFERENCES diagnosis_sessions(id),
-  status TEXT NOT NULL CHECK (status IN ('PENDING','IN_PROGRESS','COMPLETED','BLOCKED')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  diagnosis_session_id UUID NOT NULL REFERENCES diagnosis_sessions(id),
+  agent_run_id UUID NOT NULL REFERENCES agent_runs(id),
+  created_by_user_id UUID NOT NULL REFERENCES users(id),
+  status TEXT NOT NULL CHECK (status IN ('CREATED','IN_PROGRESS','COMPLETED','BLOCKED')) DEFAULT 'CREATED',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE checklist_steps (
+CREATE TABLE checklist_items (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
   checklist_run_id UUID NOT NULL REFERENCES checklist_runs(id),
-  step_order INT NOT NULL,
+  source_inspection_plan_item_id UUID NOT NULL REFERENCES inspection_plan_items(id),
+  item_order INT NOT NULL,
   title TEXT NOT NULL,
-  expected_observation TEXT,
-  safety_level TEXT NOT NULL CHECK (safety_level IN ('NORMAL','CAUTION','APPROVAL_REQUIRED')),
-  status TEXT NOT NULL CHECK (status IN ('PENDING','DONE','SKIPPED','BLOCKED')) DEFAULT 'PENDING',
-  note TEXT
+  description TEXT NOT NULL,
+  expected_result TEXT,
+  status TEXT NOT NULL CHECK (status IN ('TODO','IN_PROGRESS','DONE','BLOCKED','SKIPPED')) DEFAULT 'TODO',
+  field_note TEXT,
+  completed_by_user_id UUID REFERENCES users(id),
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (checklist_run_id, item_order)
 );
 
 CREATE TABLE reports (
@@ -272,5 +281,8 @@ CREATE INDEX idx_diagnosis_sessions_tenant_equipment ON diagnosis_sessions(tenan
 CREATE INDEX idx_agent_runs_session ON agent_runs(tenant_id, session_id);
 CREATE INDEX idx_agent_steps_run ON agent_steps(agent_run_id);
 CREATE INDEX idx_evidence_links_hypothesis ON evidence_links(hypothesis_id);
+CREATE INDEX idx_checklist_runs_tenant_session ON checklist_runs(tenant_id, diagnosis_session_id);
+CREATE INDEX idx_checklist_runs_agent_run ON checklist_runs(tenant_id, agent_run_id);
+CREATE INDEX idx_checklist_items_run ON checklist_items(checklist_run_id);
 CREATE INDEX idx_audit_events_tenant_created ON audit_events(tenant_id, created_at DESC);
 CREATE INDEX idx_document_chunks_embedding ON document_chunks USING ivfflat (embedding vector_cosine_ops);
