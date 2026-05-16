@@ -51,18 +51,26 @@ paths:
   /api/v1/equipment:
     get:
       summary: List equipment
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: equipment_code
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
           description: Equipment list
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/EquipmentSummary'
+                $ref: '#/components/schemas/EquipmentListResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/equipment/{equipment_id}:
@@ -205,6 +213,55 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/incidents:
+    get:
+      summary: List active incidents derived from diagnosis sessions
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: equipment_id
+          in: query
+          schema: { type: string }
+        - name: equipment_code
+          in: query
+          schema: { type: string }
+        - name: risk_level
+          in: query
+          schema: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: Incident list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/incidents/{incident_id}:
+    get:
+      summary: Get incident detail
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Incident detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentSummary'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/diagnosis-sessions/{session_id}/checklist-runs:
     post:
       summary: Create checklist run from latest completed agent analysis
@@ -243,6 +300,37 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/checklist-runs:
+    get:
+      summary: List checklist runs
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [CREATED, IN_PROGRESS, COMPLETED, BLOCKED] }
+        - name: equipment_id
+          in: query
+          schema: { type: string }
+        - name: equipment_code
+          in: query
+          schema: { type: string }
+        - name: diagnosis_session_id
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: Checklist run list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistRunListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/checklist-runs/{checklist_run_id}:
     get:
       summary: Get checklist run detail
@@ -290,6 +378,34 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/ValidationError' }
+  /api/v1/report-drafts:
+    get:
+      summary: List report drafts
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [DRAFT, SUBMITTED, APPROVED, REJECTED] }
+        - name: equipment_id
+          in: query
+          schema: { type: string }
+        - name: equipment_code
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: Report draft list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportDraftListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/report-drafts/{report_draft_id}:
     get:
       summary: Get report draft detail
@@ -377,6 +493,40 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/approvals:
+    get:
+      summary: List report approval queue
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: Approval queue
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalQueueResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/system/safety-settings:
+    get:
+      summary: Get read-only system safety settings
+      responses:
+        '200':
+          description: System safety settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemSafetySettings'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/dashboard/summary:
     get:
       summary: Get tenant-scoped dashboard summary
@@ -477,13 +627,46 @@ components:
         tenant_id: { type: string }
     EquipmentSummary:
       type: object
-      required: [id, code, name, family]
+      required:
+        - id
+        - code
+        - name
+        - family
+        - status
+        - equipment_id
+        - equipment_code
+        - equipment_name
+        - equipment_type
+        - subsystem
+        - operational_status
       properties:
         id: { type: string }
         code: { type: string }
         name: { type: string }
         family: { type: string }
         status: { type: string }
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        equipment_name: { type: string }
+        equipment_type: { type: string }
+        subsystem: { type: string }
+        location: { type: string }
+        line_code: { type: string }
+        operational_status: { type: string }
+        current_alarm_code: { type: string }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        last_seen_at: { type: string, format: date-time }
+        linked_diagnosis_session_id: { type: string }
+    EquipmentListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/EquipmentSummary' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
     EquipmentDetail:
       type: object
       required: [equipment, alarms, io_points, ethercat_devices, document_chunks]
@@ -660,6 +843,42 @@ components:
         items:
           type: array
           items: { $ref: '#/components/schemas/ChecklistItem' }
+    ChecklistRunSummary:
+      type: object
+      required:
+        - checklist_run_id
+        - diagnosis_session_id
+        - equipment_code
+        - checklist_name
+        - status
+        - total_items
+        - completed_items
+        - failed_items
+        - pending_items
+        - created_at
+        - updated_at
+      properties:
+        checklist_run_id: { type: string }
+        diagnosis_session_id: { type: string }
+        equipment_code: { type: string }
+        checklist_name: { type: string }
+        status: { type: string, enum: [CREATED, IN_PROGRESS, COMPLETED, BLOCKED] }
+        total_items: { type: integer }
+        completed_items: { type: integer }
+        failed_items: { type: integer }
+        pending_items: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ChecklistRunListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ChecklistRunSummary' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
     ChecklistItem:
       type: object
       required: [id, tenant_id, checklist_run_id, source_inspection_plan_item_id, item_order, title, description, status]
@@ -729,6 +948,37 @@ components:
         approvals:
           type: array
           items: { $ref: '#/components/schemas/ReportApproval' }
+    ReportDraftSummary:
+      type: object
+      required:
+        - report_draft_id
+        - diagnosis_session_id
+        - equipment_code
+        - status
+        - root_cause_summary
+        - created_by
+        - created_at
+        - updated_at
+      properties:
+        report_draft_id: { type: string }
+        diagnosis_session_id: { type: string }
+        equipment_code: { type: string }
+        status: { type: string, enum: [DRAFT, SUBMITTED, APPROVED, REJECTED] }
+        root_cause_summary: { type: string }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        submitted_at: { type: string, format: date-time }
+    ReportDraftListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ReportDraftSummary' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
     ReportApproval:
       type: object
       required: [id, tenant_id, report_draft_id, approver_user_id, decision, decided_at, created_at]
@@ -750,6 +1000,98 @@ components:
       required: [comment]
       properties:
         comment: { type: string }
+    IncidentSummary:
+      type: object
+      required:
+        - incident_id
+        - equipment_id
+        - equipment_code
+        - alarm_code
+        - title
+        - summary
+        - risk_level
+        - status
+        - opened_at
+        - updated_at
+        - owner
+        - assigned_role
+        - diagnosis_session_id
+      properties:
+        incident_id: { type: string }
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        alarm_code: { type: string }
+        title: { type: string }
+        summary: { type: string }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        status: { type: string }
+        opened_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        owner: { type: string }
+        assigned_role: { type: string }
+        diagnosis_session_id: { type: string }
+        linked_checklist_run_id: { type: string }
+        linked_report_draft_id: { type: string }
+    IncidentListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/IncidentSummary' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+    ApprovalQueueItem:
+      type: object
+      required: [report_draft_id, approval_status, requested_by, requested_at]
+      properties:
+        approval_id: { type: string }
+        report_draft_id: { type: string }
+        approval_status: { type: string }
+        requested_by: { type: string }
+        reviewer_id: { type: string }
+        reviewer_role: { type: string }
+        requested_at: { type: string, format: date-time }
+        reviewed_at: { type: string, format: date-time }
+        reviewer_comment: { type: string }
+        rejection_reason: { type: string }
+    ApprovalQueueResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ApprovalQueueItem' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+    SystemSafetySettings:
+      type: object
+      required:
+        - external_ai_enabled
+        - equipment_control_enabled
+        - interlock_bypass_allowed
+        - output_forcing_allowed
+        - human_approval_required
+        - audit_logging_enabled
+        - deterministic_engine_enabled
+        - allowed_equipment_scope
+        - policy_version
+        - generated_at
+      properties:
+        external_ai_enabled: { type: boolean }
+        equipment_control_enabled: { type: boolean }
+        interlock_bypass_allowed: { type: boolean }
+        output_forcing_allowed: { type: boolean }
+        human_approval_required: { type: boolean }
+        audit_logging_enabled: { type: boolean }
+        deterministic_engine_enabled: { type: boolean }
+        allowed_equipment_scope:
+          type: array
+          items: { type: string }
+        policy_version: { type: string }
+        generated_at: { type: string, format: date-time }
     DashboardSummary:
       type: object
       required:

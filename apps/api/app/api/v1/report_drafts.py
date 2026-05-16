@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Body, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.deps import ROLE_ADMIN, ROLE_FIELD, ROLE_SENIOR, require_roles
 from app.db.session import get_db
-from app.models import ReportDraft, User
-from app.schemas import ReportApprovalRequest, ReportDraftRead, ReportRejectionRequest
+from app.models import DiagnosisSession, Equipment, ReportDraft, User
+from app.schemas import ReportApprovalRequest, ReportDraftListResponse, ReportDraftRead, ReportDraftSummary, ReportRejectionRequest
 from app.services.audit import create_audit_event
 from app.services.report_builder import ReportPreconditionError, decide_report_draft, submit_report_draft
 
@@ -18,6 +18,60 @@ READ_WRITE_ROLES = (ROLE_FIELD, ROLE_SENIOR, ROLE_ADMIN)
 APPROVAL_ROLES = (ROLE_SENIOR, ROLE_ADMIN)
 
 router = APIRouter(prefix="/report-drafts", tags=["report-drafts"])
+
+
+@router.get("", response_model=ReportDraftListResponse)
+def list_report_drafts(
+    status_filter: str | None = Query(default=None, alias="status"),
+    equipment_id: uuid.UUID | None = None,
+    equipment_code: str | None = None,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(require_roles(*READ_WRITE_ROLES)),
+    db: Session = Depends(get_db),
+) -> ReportDraftListResponse:
+    filters = [ReportDraft.tenant_id == current_user.tenant_id]
+    if status_filter:
+        filters.append(ReportDraft.status == status_filter)
+    if equipment_id:
+        filters.append(DiagnosisSession.equipment_id == equipment_id)
+    if equipment_code:
+        filters.append(Equipment.code == equipment_code)
+
+    total = (
+        db.scalar(
+            select(func.count())
+            .select_from(ReportDraft)
+            .join(DiagnosisSession, ReportDraft.diagnosis_session_id == DiagnosisSession.id)
+            .join(Equipment, DiagnosisSession.equipment_id == Equipment.id)
+            .where(*filters)
+        )
+        or 0
+    )
+    reports = (
+        db.execute(
+            select(ReportDraft)
+            .join(DiagnosisSession, ReportDraft.diagnosis_session_id == DiagnosisSession.id)
+            .join(Equipment, DiagnosisSession.equipment_id == Equipment.id)
+            .options(
+                joinedload(ReportDraft.diagnosis_session).joinedload(DiagnosisSession.equipment),
+                joinedload(ReportDraft.created_by),
+            )
+            .where(*filters)
+            .order_by(ReportDraft.updated_at.desc(), ReportDraft.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        .unique()
+        .scalars()
+        .all()
+    )
+    return ReportDraftListResponse(
+        items=[_report_draft_summary(report) for report in reports],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{report_draft_id}", response_model=ReportDraftRead)
@@ -124,3 +178,17 @@ def _audit_cross_tenant_report_attempt(db: Session, current_user: User, report_d
         payload={"reason": "cross_tenant_or_not_visible"},
     )
     db.commit()
+
+
+def _report_draft_summary(report: ReportDraft) -> ReportDraftSummary:
+    return ReportDraftSummary(
+        report_draft_id=report.id,
+        diagnosis_session_id=report.diagnosis_session_id,
+        equipment_code=report.diagnosis_session.equipment.code,
+        status=report.status,
+        root_cause_summary=report.root_cause,
+        created_by=report.created_by.display_name,
+        created_at=report.created_at,
+        updated_at=report.updated_at,
+        submitted_at=report.updated_at if report.status in {"SUBMITTED", "APPROVED", "REJECTED"} else None,
+    )

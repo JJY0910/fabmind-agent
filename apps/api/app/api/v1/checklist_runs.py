@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.deps import ROLE_ADMIN, ROLE_FIELD, ROLE_SENIOR, require_roles
 from app.db.session import get_db
-from app.models import ChecklistItem, ChecklistRun, User
-from app.schemas import ChecklistRunRead, UpdateChecklistItemRequest
+from app.models import ChecklistItem, ChecklistRun, DiagnosisSession, Equipment, User
+from app.schemas import ChecklistRunListResponse, ChecklistRunRead, ChecklistRunSummary, UpdateChecklistItemRequest
 from app.services.audit import create_audit_event
 from app.services.checklist_runner import update_checklist_item
 
@@ -17,6 +17,63 @@ from app.services.checklist_runner import update_checklist_item
 READ_WRITE_ROLES = (ROLE_FIELD, ROLE_SENIOR, ROLE_ADMIN)
 
 router = APIRouter(prefix="/checklist-runs", tags=["checklist-runs"])
+
+
+@router.get("", response_model=ChecklistRunListResponse)
+def list_checklist_runs(
+    status_filter: str | None = Query(default=None, alias="status"),
+    equipment_id: uuid.UUID | None = None,
+    equipment_code: str | None = None,
+    diagnosis_session_id: uuid.UUID | None = None,
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    current_user: User = Depends(require_roles(*READ_WRITE_ROLES)),
+    db: Session = Depends(get_db),
+) -> ChecklistRunListResponse:
+    filters = [ChecklistRun.tenant_id == current_user.tenant_id]
+    if status_filter:
+        filters.append(ChecklistRun.status == status_filter)
+    if diagnosis_session_id:
+        filters.append(ChecklistRun.diagnosis_session_id == diagnosis_session_id)
+    if equipment_id:
+        filters.append(DiagnosisSession.equipment_id == equipment_id)
+    if equipment_code:
+        filters.append(Equipment.code == equipment_code)
+
+    total = (
+        db.scalar(
+            select(func.count())
+            .select_from(ChecklistRun)
+            .join(DiagnosisSession, ChecklistRun.diagnosis_session_id == DiagnosisSession.id)
+            .join(Equipment, DiagnosisSession.equipment_id == Equipment.id)
+            .where(*filters)
+        )
+        or 0
+    )
+    checklist_runs = (
+        db.execute(
+            select(ChecklistRun)
+            .join(DiagnosisSession, ChecklistRun.diagnosis_session_id == DiagnosisSession.id)
+            .join(Equipment, DiagnosisSession.equipment_id == Equipment.id)
+            .options(
+                joinedload(ChecklistRun.items),
+                joinedload(ChecklistRun.diagnosis_session).joinedload(DiagnosisSession.equipment),
+            )
+            .where(*filters)
+            .order_by(ChecklistRun.updated_at.desc(), ChecklistRun.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        .unique()
+        .scalars()
+        .all()
+    )
+    return ChecklistRunListResponse(
+        items=[_checklist_run_summary(checklist_run) for checklist_run in checklist_runs],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{checklist_run_id}", response_model=ChecklistRunRead)
@@ -112,3 +169,24 @@ def _audit_cross_tenant_item_attempt(db: Session, current_user: User, item_id: u
         payload={"reason": "cross_tenant_or_not_visible"},
     )
     db.commit()
+
+
+def _checklist_run_summary(checklist_run: ChecklistRun) -> ChecklistRunSummary:
+    items = checklist_run.items
+    completed_items = sum(1 for item in items if item.status in {"DONE", "SKIPPED"})
+    failed_items = sum(1 for item in items if item.status == "BLOCKED")
+    pending_items = sum(1 for item in items if item.status in {"TODO", "IN_PROGRESS"})
+    equipment_code = checklist_run.diagnosis_session.equipment.code
+    return ChecklistRunSummary(
+        checklist_run_id=checklist_run.id,
+        diagnosis_session_id=checklist_run.diagnosis_session_id,
+        equipment_code=equipment_code,
+        checklist_name=f"{equipment_code} inspection checklist",
+        status=checklist_run.status,
+        total_items=len(items),
+        completed_items=completed_items,
+        failed_items=failed_items,
+        pending_items=pending_items,
+        created_at=checklist_run.created_at,
+        updated_at=checklist_run.updated_at,
+    )
