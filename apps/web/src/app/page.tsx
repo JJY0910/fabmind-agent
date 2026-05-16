@@ -1,6 +1,9 @@
+"use client";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Clock, Activity, FileText, Microscope, ShieldAlert, Cpu, CheckSquare } from "lucide-react";
 import Link from "next/link";
+import { fetchDashboardSummary } from "@/lib/api";
 
 const mockSummary = {
   active_diagnosis_count: 7,
@@ -22,6 +25,20 @@ const mockSummary = {
 };
 
 export default function HomePage() {
+  const [summary, setSummary] = useState(mockSummary);
+
+  useEffect(() => {
+    fetchDashboardSummary()
+      .then(data => {
+        if (data && data.active_diagnosis_count !== undefined) {
+          setSummary(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend unavailable, falling back to deterministic fixture', err);
+      });
+  }, []);
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
 
@@ -45,7 +62,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-[#00e5ff]">Active Diagnosis</p>
               <Activity className="h-4 w-4 text-[#00e5ff]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">{mockSummary.active_diagnosis_count}</div>
+            <div className="text-3xl font-bold text-white mt-2">{summary.active_diagnosis_count}</div>
           </CardContent>
         </Card>
 
@@ -55,7 +72,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Pending Approval</p>
               <Clock className="h-4 w-4 text-[#ffaa00]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">{mockSummary.pending_approval_count}</div>
+            <div className="text-3xl font-bold text-white mt-2">{summary.pending_approval_count}</div>
           </CardContent>
         </Card>
 
@@ -65,7 +82,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">High Risk Active</p>
               <ShieldAlert className="h-4 w-4 text-[#ff3366]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">{mockSummary.high_risk_count}</div>
+            <div className="text-3xl font-bold text-white mt-2">{summary.high_risk_count}</div>
           </CardContent>
         </Card>
 
@@ -76,7 +93,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Evidence Linked</p>
               <FileText className="h-4 w-4 text-[#00cc66]" />
             </div>
-            <div className="text-3xl font-bold text-white mt-2">{mockSummary.evidence_linked_rate}%</div>
+            <div className="text-3xl font-bold text-white mt-2">{summary.evidence_linked_rate}%</div>
           </CardContent>
         </Card>
 
@@ -87,7 +104,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Open Checklists</p>
               <CheckSquare className="h-4 w-4 text-slate-500" />
             </div>
-            <div className="text-2xl font-bold text-white mt-2">{mockSummary.open_checklist_count}</div>
+            <div className="text-2xl font-bold text-white mt-2">{summary.open_checklist_count}</div>
           </CardContent>
         </Card>
         <Card>
@@ -96,7 +113,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Submitted Reports</p>
               <FileText className="h-4 w-4 text-[#ffaa00]" />
             </div>
-            <div className="text-2xl font-bold text-white mt-2">{mockSummary.submitted_report_count}</div>
+            <div className="text-2xl font-bold text-white mt-2">{summary.submitted_report_count}</div>
           </CardContent>
         </Card>
         <Card>
@@ -105,7 +122,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Approved Reports</p>
               <CheckCircle2 className="h-4 w-4 text-[#00cc66]" />
             </div>
-            <div className="text-2xl font-bold text-white mt-2">{mockSummary.approved_report_count}</div>
+            <div className="text-2xl font-bold text-white mt-2">{summary.approved_report_count}</div>
           </CardContent>
         </Card>
         <Card>
@@ -114,7 +131,7 @@ export default function HomePage() {
               <p className="text-sm font-medium text-slate-400">Guardrail Blocks (Today)</p>
               <AlertCircle className="h-4 w-4 text-[#ff3366]" />
             </div>
-            <div className="text-2xl font-bold text-white mt-2">{mockSummary.guardrail_blocks_today}</div>
+            <div className="text-2xl font-bold text-white mt-2">{summary.guardrail_blocks_today}</div>
           </CardContent>
         </Card>
       </div>
@@ -135,7 +152,7 @@ export default function HomePage() {
 
           <Card className="border-[#1a2c4d] overflow-hidden">
             <div className="divide-y divide-[#1a2c4d]">
-              {mockSummary.recent_diagnosis_sessions.map((item, i) => {
+              {summary.recent_diagnosis_sessions.map((item, i) => {
                 const isGoldenPath = item.equipment_code === 'LP-01';
                 const statusColor = item.status === 'CLOSED' ? 'text-slate-500' : 'text-[#00cc66]';
 
@@ -196,7 +213,7 @@ export default function HomePage() {
               Required Actions
             </h2>
 
-            {mockSummary.required_actions.map((action, i) => (
+            {summary.required_actions.map((action, i) => (
               <Card key={i} className="border-[#ffaa00]/30 bg-[#ffaa00]/5 shadow-[0_0_15px_rgba(255,170,0,0.05)]">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm text-[#ffaa00] flex items-center gap-2">

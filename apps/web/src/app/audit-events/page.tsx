@@ -1,5 +1,8 @@
+"use client";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Search, Filter, History, User, Cpu } from "lucide-react";
+import { fetchAuditEvents } from "@/lib/api";
 
 const mockAuditEvents = [
   { id: "AE-9001", event_type: "POLICY_BLOCKED", severity: "HIGH", resource_type: "AGENT_RUN", actor: "Engineer Kim", created_at: "2026-05-16T09:45:00Z", payload: '{"action": "FORCE_OP", "reason": "SAFETY_VIOLATION"}' },
@@ -10,6 +13,20 @@ const mockAuditEvents = [
 ];
 
 export default function AuditConsolePage() {
+  const [auditEvents, setAuditEvents] = useState(mockAuditEvents);
+
+  useEffect(() => {
+    fetchAuditEvents()
+      .then(data => {
+        if (data && data.items) {
+          setAuditEvents(data.items);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend unavailable, falling back to deterministic fixture', err);
+      });
+  }, []);
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col gap-2 mb-6">
@@ -64,7 +81,7 @@ export default function AuditConsolePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1a2c4d]">
-              {mockAuditEvents.map((event) => (
+              {auditEvents.map((event) => (
                 <tr key={event.id} className="hover:bg-[#111d33]/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1">

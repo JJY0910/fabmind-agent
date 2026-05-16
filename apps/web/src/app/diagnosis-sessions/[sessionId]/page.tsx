@@ -1,6 +1,10 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, ShieldAlert, FileText, CheckSquare, ShieldCheck, Microscope, Database, Clock, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { fetchDiagnosisSession } from "@/lib/api";
 
 // Deterministic mock data matching contracts/openapi.yaml
 const mockData = {
@@ -54,7 +58,25 @@ const mockData = {
 };
 
 export default function DiagnosisSessionPage() {
-  const { session, agent_run } = mockData;
+  const params = useParams();
+  const sessionId = params?.sessionId as string;
+  const [data, setData] = useState(mockData);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    fetchDiagnosisSession(sessionId)
+      .then(res => {
+        // If backend returns the aggregate form, use it
+        if (res && res.session && res.agent_run) {
+          setData({ session: res.session, agent_run: res.agent_run });
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend unavailable or schema mismatch, falling back to deterministic fixture', err);
+      });
+  }, [sessionId]);
+
+  const { session, agent_run } = data;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
