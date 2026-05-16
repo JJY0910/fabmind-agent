@@ -19,7 +19,7 @@ export function Sidebar() {
           <Activity className="w-4 h-4 group-hover:text-[#00e5ff] transition-colors" />
           <span className="font-medium text-sm">Equipment</span>
         </Link>
-        <Link href="/incidents" className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#111d33] text-slate-400 hover:text-slate-200 rounded-md transition-colors group">
+        <Link href="/active-incidents" className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#111d33] text-slate-400 hover:text-slate-200 rounded-md transition-colors group">
           <ShieldAlert className="w-4 h-4 group-hover:text-[#ff3366] transition-colors" />
           <span className="font-medium text-sm">Active Incidents</span>
         </Link>

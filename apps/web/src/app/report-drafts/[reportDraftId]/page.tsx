@@ -47,7 +47,7 @@ export default function ReportDraftPage() {
   const [data, setData] = useState(mockReportDraft);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  // UI Role Simulator for Portfolio Demo
+  // UI Role View Selector
   const [userRole, setUserRole] = useState<"FIELD_ENGINEER" | "SENIOR_ENGINEER">("FIELD_ENGINEER");
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectInput, setShowRejectInput] = useState(false);
@@ -109,7 +109,7 @@ export default function ReportDraftPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
 
-      {/* Portfolio Demo Role Switcher */}
+      {/* Role View Selector */}
       <div className="flex items-center justify-end mb-4 border-b border-[#1a2c4d] pb-2">
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Settings className="w-3.5 h-3.5" />
