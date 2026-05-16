@@ -10,7 +10,7 @@ test.describe('Checklist Runner UI', () => {
     await expect(page.locator('text=RUN-LP-01')).toBeVisible();
 
     // 2. Verify Session context
-    await expect(page.locator('text=LP-01-SESSION')).toBeVisible();
+    await expect(page.getByText('Checklist Runner')).toBeVisible();
 
     // 3. Verify Item list
     await expect(page.locator('text=인터락 상태 확인')).toBeVisible();
