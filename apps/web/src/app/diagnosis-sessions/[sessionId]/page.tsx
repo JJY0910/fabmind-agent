@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, ShieldAlert, FileText, CheckSquare, ShieldCheck, Microscope, Database, Clock, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { fetchDiagnosisSession } from "@/lib/api";
+import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
 
 // Deterministic mock data matching contracts/openapi.yaml
 const mockData = {
@@ -81,13 +82,9 @@ export default function DiagnosisSessionPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       
-      {/* Top Navigation / Breadcrumbs */}
-      <div className="flex items-center text-sm text-slate-400 gap-2 mb-2">
-        <Link href="/" className="hover:text-white transition-colors">Dashboard</Link>
-        <ChevronRight className="w-4 h-4" />
-        <span>Diagnosis Sessions</span>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-[#00e5ff] font-mono">{session.id}</span>
+      {/* Top Navigation / Stepper */}
+      <div className="mb-4">
+        <WorkflowStepper currentStep="DIAGNOSIS" />
       </div>
 
       {/* Header */}
@@ -105,14 +102,11 @@ export default function DiagnosisSessionPage() {
           <p className="text-slate-400">Deterministic Rule Engine Execution</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3">
-          <Link href={`/checklist-runs/RUN-${session.id.replace('-SESSION', '')}`} className="px-4 py-2 bg-[#00cc66] hover:bg-[#00cc66]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,204,102,0.3)] transition-all whitespace-nowrap">
-            Open Checklist Runner
+          <Link href={`/checklist-runs/RUN-${session.id.replace('-SESSION', '')}`} className="px-4 py-2 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all whitespace-nowrap">
+            Continue to Checklist Run
           </Link>
-          <button className="px-4 py-2 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] rounded-md text-sm font-medium text-white transition-colors whitespace-nowrap">
-            View Raw Snapshot
-          </button>
-          <Link href={`/report-drafts/RPT-${session.id.replace('-SESSION', '')}`} className="px-4 py-2 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all whitespace-nowrap">
-            Generate Report Draft
+          <Link href={`/report-drafts/RPT-${session.id.replace('-SESSION', '')}`} className="px-4 py-2 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] text-[#00e5ff] rounded-md text-sm font-medium transition-colors whitespace-nowrap">
+            Skip to Report Draft
           </Link>
         </div>
       </div>

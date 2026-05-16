@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckSquare, ShieldAlert, Clock, Save, User, FileText, ChevronRight, AlertTriangle, AlertCircle, Database } from "lucide-react";
 import Link from "next/link";
 import { fetchChecklistRun, updateChecklistItem } from "@/lib/api";
+import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
 
 const mockChecklistRun = {
   id: "RUN-LP-01",
@@ -117,13 +118,9 @@ export default function ChecklistRunnerPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       
-      {/* Breadcrumbs */}
-      <div className="flex items-center text-sm text-slate-400 gap-2 mb-2">
-        <Link href="/" className="hover:text-white transition-colors">Dashboard</Link>
-        <ChevronRight className="w-4 h-4" />
-        <Link href={`/diagnosis-sessions/${data.diagnosis_session_id}`} className="hover:text-white transition-colors">Session {data.diagnosis_session_id}</Link>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-[#00e5ff] font-mono">Checklist {data.id}</span>
+      {/* Stepper */}
+      <div className="mb-4">
+        <WorkflowStepper currentStep="CHECKLIST" />
       </div>
 
       {/* Header */}
@@ -140,6 +137,11 @@ export default function ChecklistRunnerPage() {
             </span>
           </div>
           <p className="text-slate-400">Agent-Recommended Inspection Plan Execution</p>
+        </div>
+        <div>
+          <Link href={`/report-drafts/RPT-${data.diagnosis_session_id.replace('-SESSION', '')}`} className="px-4 py-2 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all whitespace-nowrap block">
+            Continue to Report Draft
+          </Link>
         </div>
       </div>
 

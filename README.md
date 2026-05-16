@@ -18,20 +18,17 @@ FabMind Agent의 독자성은 “AI가 모든 장비를 알아서 고친다”�
 4. **Agent Timeline UI**: AI가 어떤 단계로 판단했는지 화면에서 재현 가능하게 표시
 5. **Human Approval + Audit Trail**: AI 결과는 조치 명령이 아니라 승인 가능한 보고서/점검안으로만 남김
 
-## Golden Path
+## Golden Path Demo Flow
 
-```text
-로그인
-→ Dashboard
-→ Equipment 선택
-→ New Diagnosis 생성
-→ Agent Analysis 실행
-→ 원인 후보 TOP 3 + 근거 표시
-→ 점검 체크리스트 생성
-→ 보고서 초안 생성
-→ Senior 승인/반려
-→ Audit Log 기록
-```
+포트폴리오 심사역(교수님, 회사 면접관)을 위한 핵심 시연 시나리오입니다.
+이 앱은 "알아서 다 고쳐주는 위험한 챗봇"이 아니라, **안전 경계(Read-Only)와 인간의 승인(Human-in-the-loop)을 엄격히 지키는 현실적인 AI 어시스턴트**임을 보여줍니다.
+
+**시연 순서:**
+1. **[Dashboard](http://localhost:3000/)**: "Golden Path Demo" 패널에서 `Start Golden Path` 클릭 (Load Port FOUP Clamp 알람 인지)
+2. **[Diagnosis Session](http://localhost:3000/diagnosis-sessions/LP-01-SESSION)**: Agent가 수집한 상황 스냅샷, I/O 상태, 매뉴얼 근거(Evidence)를 바탕으로 도출한 가설 확인
+3. **[Checklist Runner](http://localhost:3000/checklist-runs/RUN-LP-01)**: 현장 엔지니어 관점에서 안전 규정에 따른 점검 지시를 수행하고 필드 노트 작성
+4. **[Report & Approval](http://localhost:3000/report-drafts/RPT-LP-01)**: 시니어 엔지니어 관점에서 최종 원인과 조치 내역을 검토 후 승인(Approve) 또는 반려(Reject)
+5. **[Audit Console](http://localhost:3000/audit-events)**: 모든 사용자 활동과 정책 차단 내역이 위변조 불가능한 형태의 로그(Audit Trail)로 남았는지 확인
 
 ## 실행 원칙
 

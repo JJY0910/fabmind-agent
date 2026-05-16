@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle2, Clock, Activity, FileText, Microscope, ShieldAlert, Cpu, CheckSquare } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Activity, FileText, Microscope, ShieldAlert, Cpu, CheckSquare, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { fetchDashboardSummary } from "@/lib/api";
+import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
 
 const mockSummary = {
   active_diagnosis_count: 7,
@@ -43,15 +44,43 @@ export default function HomePage() {
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
 
       {/* Page Header */}
-      <div className="flex flex-col gap-2 mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-          <Cpu className="w-8 h-8 text-[#00e5ff]" />
-          Operations Center
-        </h1>
-        <p className="text-slate-400">
-          Load Port & FOUP Clamp Evidence-First AI Diagnostics
-        </p>
+      <div className="flex flex-col gap-4 mb-8">
+        <WorkflowStepper currentStep="DASHBOARD" />
+        <div className="flex flex-col gap-2 mt-4">
+          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <Cpu className="w-8 h-8 text-[#00e5ff]" />
+            Operations Center
+          </h1>
+          <p className="text-slate-400">
+            Load Port & FOUP Clamp Evidence-First AI Diagnostics
+          </p>
+        </div>
       </div>
+
+      {/* Golden Path Entry */}
+      <Card className="border-[#00e5ff]/30 bg-[linear-gradient(110deg,#0a1322_0%,#111d33_100%)] shadow-[0_0_20px_rgba(0,229,255,0.05)]">
+        <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <PlayCircle className="w-6 h-6 text-[#00e5ff]" />
+              Golden Path Demo: Load Port FOUP Clamp Alarm
+            </h2>
+            <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
+              Follow one complete evidence-based troubleshooting workflow from alarm triage to senior approval and audit review.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <span className="text-xs font-mono bg-[#050b14] border border-[#1a2c4d] text-[#00e5ff] px-2 py-1 rounded">Load Port LP-01</span>
+              <span className="text-xs font-mono bg-[#050b14] border border-[#1a2c4d] text-slate-300 px-2 py-1 rounded">FOUP Clamp / EtherCAT I/O</span>
+            </div>
+          </div>
+          <Link
+            href="/diagnosis-sessions/LP-01-SESSION"
+            className="shrink-0 px-6 py-3 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-[#050b14] rounded-md text-sm font-bold shadow-[0_0_15px_rgba(0,229,255,0.3)] transition-all whitespace-nowrap"
+          >
+            Start Golden Path
+          </Link>
+        </CardContent>
+      </Card>
 
       {/* System Status Panel (Metrics) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
