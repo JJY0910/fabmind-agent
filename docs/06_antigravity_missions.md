@@ -7,7 +7,7 @@ Antigravity는 UI, 브라우저 검증, 화면 품질, 사용성 확인에 집�
 ```text
 You are building FabMind Agent.
 
-Goal: initialize an executable monorepo scaffold, not a toy demo.
+Goal: initialize an executable monorepo scaffold for an industrial troubleshooting platform.
 
 Canonical structure:
 apps/web
@@ -93,10 +93,10 @@ Use Scenario A, B, C from docs/04_golden_path_spec.md.
 Verify in browser.
 ```
 
-## Mission 3 - Final E2E Demo Verification
+## Mission 3 - Final E2E Workflow Verification
 
 ```text
-Run the final demo as a reviewer.
+Run the final operational workflow as a reviewer.
 
 Check:
 1. Login as field engineer

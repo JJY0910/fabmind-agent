@@ -7,7 +7,7 @@
 | Method | Path | 설명 |
 |---|---|---|
 | GET | /api/v1/health | health check |
-| POST | /api/v1/auth/login | demo login |
+| POST | /api/v1/auth/login | user login |
 | GET | /api/v1/equipment | equipment list |
 | GET | /api/v1/equipment/{id} | equipment detail aggregate |
 | POST | /api/v1/diagnosis-sessions | diagnosis create |
