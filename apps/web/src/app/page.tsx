@@ -20,7 +20,7 @@ const mockSummary = {
     { session_id: 'FC-11-SESSION', equipment_code: 'FC-11', alarm_code: 'FC-INTERLOCK-03', status: 'CLOSED', risk_level: 'LOW', created_at: new Date(Date.now() - 10800000).toISOString(), desc: '도어 닫힘 상태 불량' }
   ],
   required_actions: [
-    { action_type: 'APPROVAL_REQUIRED', resource_type: 'REPORT_DRAFT', resource_id: 'RPT-092', title: 'EtherCAT OP 강제 전환을 위한 Servo Reset 권한 요청 (Engineer Kim)', severity: 'HIGH' }
+    { action_type: 'APPROVAL_REQUIRED', resource_type: 'REPORT_DRAFT', resource_id: 'RPT-092', title: 'EtherCAT state anomaly requires senior review (Engineer Kim)', severity: 'HIGH' }
   ],
   guardrail_blocks_today: 3
 };
