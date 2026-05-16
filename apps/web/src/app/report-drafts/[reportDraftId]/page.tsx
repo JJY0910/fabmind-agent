@@ -24,7 +24,7 @@ const mockReportDraft = {
   evidence_summary: "Agent matched alarm LP-CLAMP-014 against DOC-LP-04 manual. I/O snapshot confirmed DO_CLAMP_SOL=TRUE but DI_CLAMP_DONE=FALSE.",
   inspection_summary: "Physical inspection (Checklist RUN-LP-01) confirmed sensor LED does not illuminate on clamp actuation. Bracket was found to be loose to the touch.",
   recommended_action: "1. Stop at read-only diagnosis and do not perform equipment control from this system.\n2. Verify FOUP clamp sensor state, bracket seating, and EtherCAT I/O mapping against site-approved checklist.\n3. Record inspection findings and attach evidence before requesting senior review.\n4. Escalate to a senior engineer for any mechanical adjustment or maintenance action.",
-  safety_notes: "This report is for evidence-based troubleshooting support only. Follow site safety procedures before any physical inspection, and never bypass clamp safety logic or interlock protections. Senior approval is required before maintenance action.",
+  safety_notes: "This report is for evidence-based troubleshooting support only. Follow site safety procedures before any physical inspection, and always inspect according to site-approved procedure. Senior approval is required before maintenance action.",
   status: "DRAFT",
   created_at: "2026-05-16T09:00:00Z",
   updated_at: "2026-05-16T09:15:00Z",
