@@ -19,10 +19,12 @@ from app.schemas import (
     DiagnosisSessionRead,
     EvidenceLinkRead,
     InspectionPlanItemRead,
+    ReportDraftRead,
 )
 from app.services.agent_engine import analyze_diagnosis_session
 from app.services.audit import create_audit_event
 from app.services.checklist_runner import ChecklistRunPreconditionError, create_checklist_run_from_latest_analysis
+from app.services.report_builder import ReportPreconditionError, create_report_draft_from_session
 
 
 READ_WRITE_ROLES = (ROLE_FIELD, ROLE_SENIOR, ROLE_ADMIN)
@@ -179,6 +181,37 @@ def create_checklist_run(
     db.commit()
     db.refresh(checklist_run)
     return ChecklistRunRead.model_validate(checklist_run)
+
+
+@router.post("/{session_id}/report-drafts", response_model=ReportDraftRead, status_code=status.HTTP_201_CREATED)
+def create_report_draft(
+    session_id: uuid.UUID,
+    current_user: User = Depends(require_roles(*READ_WRITE_ROLES)),
+    db: Session = Depends(get_db),
+) -> ReportDraftRead:
+    session = db.scalar(
+        select(DiagnosisSession).where(
+            DiagnosisSession.id == session_id,
+            DiagnosisSession.tenant_id == current_user.tenant_id,
+        )
+    )
+    if session is None:
+        _audit_cross_tenant_session_attempt(db, current_user, session_id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Diagnosis session not found")
+
+    try:
+        report_draft = create_report_draft_from_session(
+            db,
+            diagnosis_session=session,
+            actor_user_id=current_user.id,
+        )
+    except ReportPreconditionError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    db.commit()
+    db.refresh(report_draft)
+    return ReportDraftRead.model_validate(report_draft)
 
 
 def _audit_cross_tenant_equipment_attempt(db: Session, current_user: User, equipment_id: uuid.UUID) -> None:

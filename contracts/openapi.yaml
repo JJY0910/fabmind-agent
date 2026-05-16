@@ -224,6 +224,25 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/diagnosis-sessions/{session_id}/report-drafts:
+    post:
+      summary: Create deterministic report draft from analysis and checklist
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '201':
+          description: Report draft created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportDraft'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/checklist-runs/{checklist_run_id}:
     get:
       summary: Get checklist run detail
@@ -271,42 +290,73 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '422': { $ref: '#/components/responses/ValidationError' }
-  /api/v1/reports:
-    post:
-      summary: Create report draft
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateReportRequest'
-      responses:
-        '201':
-          description: Report draft
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Report'
-  /api/v1/reports/{report_id}/request-approval:
-    post:
-      summary: Request report approval
+  /api/v1/report-drafts/{report_draft_id}:
+    get:
+      summary: Get report draft detail
       parameters:
-        - name: report_id
+        - name: report_draft_id
           in: path
           required: true
           schema: { type: string }
       responses:
         '200':
-          description: Approval request
+          description: Report draft detail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApprovalRequest'
-  /api/v1/approval-requests/{approval_id}/approve:
+                $ref: '#/components/schemas/ReportDraft'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/report-drafts/{report_draft_id}/submit:
     post:
-      summary: Approve report
+      summary: Submit report draft for approval
       parameters:
-        - name: approval_id
+        - name: report_draft_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Submitted report draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportDraft'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/report-drafts/{report_draft_id}/approve:
+    post:
+      summary: Approve submitted report draft
+      parameters:
+        - name: report_draft_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportApprovalRequest'
+      responses:
+        '200':
+          description: Approved report draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportDraft'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/report-drafts/{report_draft_id}/reject:
+    post:
+      summary: Reject submitted report draft
+      parameters:
+        - name: report_draft_id
           in: path
           required: true
           schema: { type: string }
@@ -315,27 +365,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalDecisionRequest'
+              $ref: '#/components/schemas/ReportRejectionRequest'
       responses:
-        '200': { description: Approved }
+        '200':
+          description: Rejected report draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportDraft'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
-  /api/v1/approval-requests/{approval_id}/reject:
-    post:
-      summary: Reject report
-      parameters:
-        - name: approval_id
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApprovalDecisionRequest'
-      responses:
-        '200': { description: Rejected }
-        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /api/v1/audit-events:
     get:
       summary: Search audit events
@@ -511,7 +552,7 @@ components:
       properties:
         session: { $ref: '#/components/schemas/DiagnosisSession' }
         agent_run: { $ref: '#/components/schemas/AgentRunResult' }
-        report: { $ref: '#/components/schemas/Report' }
+        report: { $ref: '#/components/schemas/ReportDraft' }
     AgentRunResult:
       type: object
       required: [run_id, session_id, status, mode, safety_result, risk_level, steps, hypotheses, evidence, inspection_plan_items]
@@ -632,24 +673,61 @@ components:
         type: { type: string }
         title: { type: string }
         content: { type: string }
-    CreateReportRequest:
+    ReportDraft:
       type: object
-      required: [session_id]
-      properties:
-        session_id: { type: string }
-    Report:
-      type: object
+      required:
+        - id
+        - tenant_id
+        - diagnosis_session_id
+        - agent_run_id
+        - checklist_run_id
+        - created_by_user_id
+        - title
+        - summary
+        - root_cause
+        - evidence_summary
+        - inspection_summary
+        - recommended_action
+        - safety_notes
+        - status
+        - approvals
       properties:
         id: { type: string }
-        status: { type: string, enum: [DRAFT, PENDING_APPROVAL, APPROVED, REJECTED] }
+        tenant_id: { type: string }
+        diagnosis_session_id: { type: string }
+        agent_run_id: { type: string }
+        checklist_run_id: { type: string }
+        created_by_user_id: { type: string }
         title: { type: string }
-        body: { type: string }
-    ApprovalRequest:
+        summary: { type: string }
+        root_cause: { type: string }
+        evidence_summary: { type: string }
+        inspection_summary: { type: string }
+        recommended_action: { type: string }
+        safety_notes: { type: string }
+        status: { type: string, enum: [DRAFT, SUBMITTED, APPROVED, REJECTED] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        approvals:
+          type: array
+          items: { $ref: '#/components/schemas/ReportApproval' }
+    ReportApproval:
       type: object
+      required: [id, tenant_id, report_draft_id, approver_user_id, decision, decided_at, created_at]
       properties:
         id: { type: string }
-        status: { type: string, enum: [PENDING, APPROVED, REJECTED] }
-    ApprovalDecisionRequest:
+        tenant_id: { type: string }
+        report_draft_id: { type: string }
+        approver_user_id: { type: string }
+        decision: { type: string, enum: [APPROVED, REJECTED] }
+        comment: { type: string }
+        decided_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+    ReportApprovalRequest:
+      type: object
+      properties:
+        comment: { type: string }
+    ReportRejectionRequest:
       type: object
       required: [comment]
       properties:

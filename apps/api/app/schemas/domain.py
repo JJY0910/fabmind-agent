@@ -289,3 +289,50 @@ class ChecklistRunRead(BaseModel):
 class UpdateChecklistItemRequest(BaseModel):
     status: ChecklistItemStatus | None = None
     field_note: str | None = None
+
+
+ReportDraftStatus = Literal["DRAFT", "SUBMITTED", "APPROVED", "REJECTED"]
+ReportDecision = Literal["APPROVED", "REJECTED"]
+
+
+class ReportApprovalRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    report_draft_id: uuid.UUID
+    approver_user_id: uuid.UUID
+    decision: ReportDecision
+    comment: str | None = None
+    decided_at: datetime
+    created_at: datetime
+
+
+class ReportDraftRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    tenant_id: uuid.UUID
+    diagnosis_session_id: uuid.UUID
+    agent_run_id: uuid.UUID
+    checklist_run_id: uuid.UUID
+    created_by_user_id: uuid.UUID
+    title: str
+    summary: str
+    root_cause: str
+    evidence_summary: str
+    inspection_summary: str
+    recommended_action: str
+    safety_notes: str
+    status: ReportDraftStatus
+    created_at: datetime
+    updated_at: datetime
+    approvals: list[ReportApprovalRead] = Field(default_factory=list)
+
+
+class ReportApprovalRequest(BaseModel):
+    comment: str | None = None
+
+
+class ReportRejectionRequest(BaseModel):
+    comment: str = Field(min_length=1)

@@ -225,30 +225,34 @@ CREATE TABLE checklist_items (
   UNIQUE (checklist_run_id, item_order)
 );
 
-CREATE TABLE reports (
+CREATE TABLE report_drafts (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
-  session_id UUID NOT NULL REFERENCES diagnosis_sessions(id),
+  diagnosis_session_id UUID NOT NULL REFERENCES diagnosis_sessions(id),
+  agent_run_id UUID NOT NULL REFERENCES agent_runs(id),
+  checklist_run_id UUID NOT NULL REFERENCES checklist_runs(id),
+  created_by_user_id UUID NOT NULL REFERENCES users(id),
   title TEXT NOT NULL,
-  body TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('DRAFT','PENDING_APPROVAL','APPROVED','REJECTED')) DEFAULT 'DRAFT',
-  created_by UUID NOT NULL REFERENCES users(id),
+  summary TEXT NOT NULL,
+  root_cause TEXT NOT NULL,
+  evidence_summary TEXT NOT NULL,
+  inspection_summary TEXT NOT NULL,
+  recommended_action TEXT NOT NULL,
+  safety_notes TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('DRAFT','SUBMITTED','APPROVED','REJECTED')) DEFAULT 'DRAFT',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE approval_requests (
+CREATE TABLE report_approvals (
   id UUID PRIMARY KEY,
   tenant_id UUID NOT NULL REFERENCES tenants(id),
-  target_type TEXT NOT NULL,
-  target_id UUID NOT NULL,
-  requested_by UUID NOT NULL REFERENCES users(id),
-  approver_id UUID REFERENCES users(id),
-  status TEXT NOT NULL CHECK (status IN ('PENDING','APPROVED','REJECTED')) DEFAULT 'PENDING',
-  requested_reason TEXT,
-  decision_comment TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  decided_at TIMESTAMPTZ
+  report_draft_id UUID NOT NULL REFERENCES report_drafts(id),
+  approver_user_id UUID NOT NULL REFERENCES users(id),
+  decision TEXT NOT NULL CHECK (decision IN ('APPROVED','REJECTED')),
+  comment TEXT,
+  decided_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE policy_violations (
@@ -284,5 +288,8 @@ CREATE INDEX idx_evidence_links_hypothesis ON evidence_links(hypothesis_id);
 CREATE INDEX idx_checklist_runs_tenant_session ON checklist_runs(tenant_id, diagnosis_session_id);
 CREATE INDEX idx_checklist_runs_agent_run ON checklist_runs(tenant_id, agent_run_id);
 CREATE INDEX idx_checklist_items_run ON checklist_items(checklist_run_id);
+CREATE INDEX idx_report_drafts_tenant_session ON report_drafts(tenant_id, diagnosis_session_id);
+CREATE INDEX idx_report_drafts_tenant_status ON report_drafts(tenant_id, status);
+CREATE INDEX idx_report_approvals_report ON report_approvals(tenant_id, report_draft_id);
 CREATE INDEX idx_audit_events_tenant_created ON audit_events(tenant_id, created_at DESC);
 CREATE INDEX idx_document_chunks_embedding ON document_chunks USING ivfflat (embedding vector_cosine_ops);
