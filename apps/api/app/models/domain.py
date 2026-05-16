@@ -236,6 +236,7 @@ class DiagnosisSession(Base):
     created_by: Mapped[User] = relationship()
     agent_runs: Mapped[list["AgentRun"]] = relationship(back_populates="session")
     checklist_runs: Mapped[list["ChecklistRun"]] = relationship(back_populates="diagnosis_session")
+    report_drafts: Mapped[list["ReportDraft"]] = relationship(back_populates="diagnosis_session")
 
 
 class AgentRun(Base):
@@ -268,6 +269,7 @@ class AgentRun(Base):
         order_by="InspectionPlanItem.item_order",
     )
     checklist_runs: Mapped[list["ChecklistRun"]] = relationship(back_populates="agent_run")
+    report_drafts: Mapped[list["ReportDraft"]] = relationship(back_populates="agent_run")
 
 
 class AgentStep(Base):
@@ -383,6 +385,7 @@ class ChecklistRun(Base):
         back_populates="checklist_run",
         order_by="ChecklistItem.item_order",
     )
+    report_drafts: Mapped[list["ReportDraft"]] = relationship(back_populates="checklist_run")
 
 
 class ChecklistItem(Base):
@@ -423,3 +426,60 @@ class ChecklistItem(Base):
     checklist_run: Mapped[ChecklistRun] = relationship(back_populates="items")
     source_inspection_plan_item: Mapped[InspectionPlanItem] = relationship(back_populates="checklist_items")
     completed_by: Mapped[User | None] = relationship()
+
+
+class ReportDraft(Base):
+    __tablename__ = "report_drafts"
+    __table_args__ = (
+        CheckConstraint("status IN ('DRAFT','SUBMITTED','APPROVED','REJECTED')", name="ck_report_drafts_status"),
+        Index("idx_report_drafts_tenant_session", "tenant_id", "diagnosis_session_id"),
+        Index("idx_report_drafts_tenant_status", "tenant_id", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    diagnosis_session_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("diagnosis_sessions.id"), nullable=False)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("agent_runs.id"), nullable=False)
+    checklist_run_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("checklist_runs.id"), nullable=False)
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    root_cause: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    inspection_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    recommended_action: Mapped[str] = mapped_column(Text, nullable=False)
+    safety_notes: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False, default="DRAFT", server_default="DRAFT")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    diagnosis_session: Mapped[DiagnosisSession] = relationship(back_populates="report_drafts")
+    agent_run: Mapped[AgentRun] = relationship(back_populates="report_drafts")
+    checklist_run: Mapped[ChecklistRun] = relationship(back_populates="report_drafts")
+    created_by: Mapped[User] = relationship()
+    approvals: Mapped[list["ReportApproval"]] = relationship(back_populates="report_draft")
+
+
+class ReportApproval(Base):
+    __tablename__ = "report_approvals"
+    __table_args__ = (
+        CheckConstraint("decision IN ('APPROVED','REJECTED')", name="ck_report_approvals_decision"),
+        Index("idx_report_approvals_report", "tenant_id", "report_draft_id"),
+    )
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    tenant_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("tenants.id"), nullable=False)
+    report_draft_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("report_drafts.id"), nullable=False)
+    approver_user_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
+    decision: Mapped[str] = mapped_column(String(40), nullable=False)
+    comment: Mapped[str | None] = mapped_column(Text)
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    report_draft: Mapped[ReportDraft] = relationship(back_populates="approvals")
+    approver: Mapped[User] = relationship()

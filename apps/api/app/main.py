@@ -6,6 +6,7 @@ from app.api.v1.checklist_runs import router as checklist_runs_router
 from app.api.v1.diagnosis_sessions import router as diagnosis_sessions_router
 from app.api.v1.equipment import router as equipment_router
 from app.api.v1.health import router as health_router
+from app.api.v1.report_drafts import router as report_drafts_router
 
 app = FastAPI(title="FabMind Agent API", version="1.0.0")
 
@@ -23,3 +24,4 @@ app.include_router(checklist_runs_router, prefix="/api/v1")
 app.include_router(diagnosis_sessions_router, prefix="/api/v1")
 app.include_router(equipment_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
+app.include_router(report_drafts_router, prefix="/api/v1")
