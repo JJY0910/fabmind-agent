@@ -336,3 +336,34 @@ class ReportApprovalRequest(BaseModel):
 
 class ReportRejectionRequest(BaseModel):
     comment: str = Field(min_length=1)
+
+
+class DashboardRecentDiagnosisSession(BaseModel):
+    session_id: uuid.UUID
+    equipment_code: str
+    alarm_code: str
+    status: DiagnosisStatus
+    risk_level: RiskLevel
+    created_at: datetime
+
+
+class DashboardRequiredAction(BaseModel):
+    action_type: str
+    resource_type: str
+    resource_id: uuid.UUID
+    title: str
+    severity: str
+    created_at: datetime | None = None
+
+
+class DashboardSummaryResponse(BaseModel):
+    active_diagnosis_count: int
+    pending_approval_count: int
+    high_risk_count: int
+    evidence_linked_rate: float
+    open_checklist_count: int
+    submitted_report_count: int
+    approved_report_count: int
+    recent_diagnosis_sessions: list[DashboardRecentDiagnosisSession]
+    required_actions: list[DashboardRequiredAction]
+    guardrail_blocks_today: int

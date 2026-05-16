@@ -377,6 +377,18 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/dashboard/summary:
+    get:
+      summary: Get tenant-scoped dashboard summary
+      responses:
+        '200':
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardSummary'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/audit-events:
     get:
       summary: Search audit events
@@ -387,6 +399,12 @@ paths:
         - name: severity
           in: query
           schema: { type: string }
+        - name: resource_type
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
       responses:
         '200':
           description: Audit events
@@ -732,12 +750,64 @@ components:
       required: [comment]
       properties:
         comment: { type: string }
+    DashboardSummary:
+      type: object
+      required:
+        - active_diagnosis_count
+        - pending_approval_count
+        - high_risk_count
+        - evidence_linked_rate
+        - open_checklist_count
+        - submitted_report_count
+        - approved_report_count
+        - recent_diagnosis_sessions
+        - required_actions
+        - guardrail_blocks_today
+      properties:
+        active_diagnosis_count: { type: integer }
+        pending_approval_count: { type: integer }
+        high_risk_count: { type: integer }
+        evidence_linked_rate: { type: number, format: float }
+        open_checklist_count: { type: integer }
+        submitted_report_count: { type: integer }
+        approved_report_count: { type: integer }
+        recent_diagnosis_sessions:
+          type: array
+          items: { $ref: '#/components/schemas/DashboardRecentDiagnosisSession' }
+        required_actions:
+          type: array
+          items: { $ref: '#/components/schemas/DashboardRequiredAction' }
+        guardrail_blocks_today: { type: integer }
+    DashboardRecentDiagnosisSession:
+      type: object
+      required: [session_id, equipment_code, alarm_code, status, risk_level, created_at]
+      properties:
+        session_id: { type: string }
+        equipment_code: { type: string }
+        alarm_code: { type: string }
+        status: { type: string, enum: [CREATED, ANALYZING, ANALYSIS_READY, INSUFFICIENT_EVIDENCE, CLOSED] }
+        risk_level: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        created_at: { type: string, format: date-time }
+    DashboardRequiredAction:
+      type: object
+      required: [action_type, resource_type, resource_id, title, severity]
+      properties:
+        action_type: { type: string }
+        resource_type: { type: string }
+        resource_id: { type: string }
+        title: { type: string }
+        severity: { type: string }
+        created_at: { type: string, format: date-time }
     AuditEvent:
       type: object
+      required: [id, event_type, resource_type, severity, created_at]
       properties:
         id: { type: string }
         event_type: { type: string }
-        severity: { type: string }
+        resource_type: { type: string }
+        resource_id: { type: string }
+        severity: { type: string, enum: [INFO, WARNING, ERROR, SECURITY] }
+        payload: { type: object }
         created_at: { type: string, format: date-time }
     ErrorResponse:
       type: object
