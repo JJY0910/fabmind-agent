@@ -1,13 +1,13 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const sidebarRoutes = [
-  { label: /^Dashboard/, path: '/', heading: /Operations Center/ },
-  { label: /^Equipment/, path: '/equipment', heading: /Equipment Registry/ },
-  { label: /^Active Incidents/, path: '/active-incidents', heading: /Active Incidents/ },
-  { label: /^Checklists/, path: '/checklists', heading: /Checklist Runs/ },
-  { label: /^Approvals/, path: '/approvals', heading: /Approval Queue/ },
-  { label: /^Audit Console/, path: '/audit-events', heading: /Audit Console/ },
-  { label: /^Settings/, path: '/settings', heading: /System Safety Settings/ },
+  { testId: 'sidebar-nav-dashboard', startPath: '/equipment', path: '/', heading: /Operations Center/ },
+  { testId: 'sidebar-nav-equipment', startPath: '/', path: '/equipment', heading: /Equipment Registry/ },
+  { testId: 'sidebar-nav-active-incidents', startPath: '/', path: '/active-incidents', heading: /Active Incidents/ },
+  { testId: 'sidebar-nav-checklists', startPath: '/', path: '/checklists', heading: /Checklist Runs/ },
+  { testId: 'sidebar-nav-approvals', startPath: '/', path: '/approvals', heading: /Approval Queue/ },
+  { testId: 'sidebar-nav-audit-console', startPath: '/', path: '/audit-events', heading: /Audit Console/ },
+  { testId: 'sidebar-nav-settings', startPath: '/', path: '/settings', heading: /System Safety Settings/ },
 ];
 
 const directRoutes = [
@@ -32,7 +32,7 @@ const representativeIds = [
   { path: '/report-drafts/RPT-LP-01', id: 'RPT-LP-01' },
 ];
 
-async function expectNoNotFound(page: import('@playwright/test').Page) {
+async function expectNoNotFound(page: Page) {
   await expect(page.getByText('This page could not be found')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: /^404$/ })).toHaveCount(0);
 }
@@ -40,9 +40,11 @@ async function expectNoNotFound(page: import('@playwright/test').Page) {
 test.describe('Sidebar navigation hardening', () => {
   for (const route of sidebarRoutes) {
     test(`sidebar link routes to ${route.path} without not-found UI`, async ({ page }) => {
-      await page.goto('/');
+      await page.goto(route.startPath);
 
-      await page.getByRole('link', { name: route.label }).click();
+      const sidebar = page.getByTestId('app-sidebar');
+      await expect(sidebar).toBeVisible();
+      await sidebar.getByTestId(route.testId).click();
 
       await expect.poll(() => new URL(page.url()).pathname).toBe(route.path);
       await expectNoNotFound(page);
