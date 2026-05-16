@@ -6,7 +6,7 @@ test.describe('Audit Console UI', () => {
     await page.goto('/');
     
     // 2. Click the Audit Console link in Sidebar
-    await page.click('text=Audit Console');
+    await page.getByRole('link', { name: 'Audit Console' }).click();
 
     // 3. Verify Navigation
     await expect(page).toHaveURL(/\/audit-events/);
@@ -16,8 +16,8 @@ test.describe('Audit Console UI', () => {
 
     // 5. Verify Filters and Limit Controls
     await expect(page.getByPlaceholder('Search payload or actor...')).toBeVisible();
-    await expect(page.locator('text=Event Type')).toBeVisible();
-    await expect(page.locator('text=Severity')).toBeVisible();
+    await expect(page.getByText('Event Type').first()).toBeVisible();
+    await expect(page.getByText('Severity').first()).toBeVisible();
     await expect(page.locator('text=Showing top')).toBeVisible();
 
     // 6. Verify Table Headers
@@ -25,7 +25,7 @@ test.describe('Audit Console UI', () => {
     await expect(page.locator('text=Payload Preview')).toBeVisible();
 
     // 7. Verify Mock Data Rendered
-    await expect(page.locator('text=POLICY_BLOCKED')).toBeVisible();
+    await expect(page.getByText('POLICY_BLOCKED').first()).toBeVisible();
     await expect(page.locator('text=AE-9001')).toBeVisible();
   });
 });
