@@ -527,6 +527,147 @@ paths:
                 $ref: '#/components/schemas/SystemSafetySettings'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/equipment-data/alarm-events:
+    post:
+      summary: Ingest read-only equipment alarm event telemetry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEquipmentAlarmEventRequest'
+      responses:
+        '201':
+          description: Alarm event ingested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentAlarmEvent'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    get:
+      summary: List read-only equipment alarm events
+      parameters:
+        - name: equipment_id
+          in: query
+          schema: { type: string }
+        - name: equipment_code
+          in: query
+          schema: { type: string }
+        - name: severity
+          in: query
+          schema: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        - name: risk_level
+          in: query
+          schema: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [ACTIVE, ACKNOWLEDGED, CLEARED] }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: Alarm event list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentAlarmEventListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/equipment-data/io-snapshots:
+    post:
+      summary: Ingest read-only equipment I/O state snapshot telemetry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEquipmentIOSnapshotRequest'
+      responses:
+        '201':
+          description: I/O snapshot ingested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentIOSnapshot'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    get:
+      summary: List read-only equipment I/O state snapshots
+      parameters:
+        - name: equipment_id
+          in: query
+          schema: { type: string }
+        - name: equipment_code
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: I/O snapshot list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentIOSnapshotListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/v1/equipment-data/ethercat-status-snapshots:
+    post:
+      summary: Ingest read-only EtherCAT status snapshot telemetry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEquipmentEthercatStatusSnapshotRequest'
+      responses:
+        '201':
+          description: EtherCAT status snapshot ingested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentEthercatStatusSnapshot'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    get:
+      summary: List read-only EtherCAT status snapshots
+      parameters:
+        - name: equipment_id
+          in: query
+          schema: { type: string }
+        - name: equipment_code
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: EtherCAT status snapshot list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EquipmentEthercatStatusSnapshotListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/dashboard/summary:
     get:
       summary: Get tenant-scoped dashboard summary
@@ -705,6 +846,157 @@ components:
         slave_no: { type: integer }
         name: { type: string }
         expected_state: { type: string, enum: [INIT, PRE_OP, SAFE_OP, OP] }
+    CreateEquipmentAlarmEventRequest:
+      type: object
+      required: [alarm_code, severity, occurred_at, source_system]
+      properties:
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        source_event_id: { type: string }
+        alarm_code: { type: string }
+        alarm_name: { type: string }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        event_status: { type: string, enum: [ACTIVE, ACKNOWLEDGED, CLEARED] }
+        occurred_at: { type: string, format: date-time }
+        source_system: { type: string }
+        raw_payload: { type: object }
+        diagnosis_session_id: { type: string }
+    EquipmentAlarmEvent:
+      type: object
+      required:
+        - id
+        - equipment_id
+        - equipment_code
+        - alarm_code
+        - severity
+        - event_status
+        - occurred_at
+        - received_at
+        - source_system
+        - raw_payload
+      properties:
+        id: { type: string }
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        source_event_id: { type: string }
+        alarm_code: { type: string }
+        alarm_name: { type: string }
+        severity: { type: string, enum: [LOW, MEDIUM, HIGH, CRITICAL] }
+        event_status: { type: string, enum: [ACTIVE, ACKNOWLEDGED, CLEARED] }
+        occurred_at: { type: string, format: date-time }
+        received_at: { type: string, format: date-time }
+        source_system: { type: string }
+        raw_payload: { type: object }
+        diagnosis_session_id: { type: string }
+    EquipmentAlarmEventListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/EquipmentAlarmEvent' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+    CreateEquipmentIOSnapshotRequest:
+      type: object
+      required: [captured_at, source_system]
+      properties:
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        source_snapshot_id: { type: string }
+        captured_at: { type: string, format: date-time }
+        source_system: { type: string }
+        observed_inputs: { type: object }
+        observed_outputs: { type: object }
+        raw_payload: { type: object }
+    EquipmentIOSnapshot:
+      type: object
+      required:
+        - id
+        - equipment_id
+        - equipment_code
+        - captured_at
+        - received_at
+        - source_system
+        - observed_inputs
+        - observed_outputs
+        - raw_payload
+      properties:
+        id: { type: string }
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        source_snapshot_id: { type: string }
+        captured_at: { type: string, format: date-time }
+        received_at: { type: string, format: date-time }
+        source_system: { type: string }
+        observed_inputs: { type: object }
+        observed_outputs: { type: object }
+        raw_payload: { type: object }
+    EquipmentIOSnapshotListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/EquipmentIOSnapshot' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
+    CreateEquipmentEthercatStatusSnapshotRequest:
+      type: object
+      required: [captured_at, source_system, master_state, slave_count, link_status]
+      properties:
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        source_snapshot_id: { type: string }
+        captured_at: { type: string, format: date-time }
+        source_system: { type: string }
+        master_state: { type: string }
+        slave_count: { type: integer }
+        working_counter: { type: integer }
+        link_status: { type: string }
+        error_code: { type: string }
+        error_summary: { type: string }
+        raw_payload: { type: object }
+    EquipmentEthercatStatusSnapshot:
+      type: object
+      required:
+        - id
+        - equipment_id
+        - equipment_code
+        - captured_at
+        - received_at
+        - source_system
+        - master_state
+        - slave_count
+        - link_status
+        - raw_payload
+      properties:
+        id: { type: string }
+        equipment_id: { type: string }
+        equipment_code: { type: string }
+        source_snapshot_id: { type: string }
+        captured_at: { type: string, format: date-time }
+        received_at: { type: string, format: date-time }
+        source_system: { type: string }
+        master_state: { type: string }
+        slave_count: { type: integer }
+        working_counter: { type: integer }
+        link_status: { type: string }
+        error_code: { type: string }
+        error_summary: { type: string }
+        raw_payload: { type: object }
+    EquipmentEthercatStatusSnapshotListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/EquipmentEthercatStatusSnapshot' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
     CreateDiagnosisSessionRequest:
       type: object
       required: [equipment_id, alarm_code, symptom_summary]
