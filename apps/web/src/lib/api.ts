@@ -73,3 +73,32 @@ export async function updateChecklistItem(checklistRunId: string, itemId: string
   if (!res.ok) throw new Error('Failed to update checklist item');
   return res.json();
 }
+
+export async function submitReportDraft(reportDraftId: string) {
+  const res = await fetch(`${BASE_URL}/api/v1/report-drafts/${reportDraftId}/submit`, {
+    method: 'POST',
+    headers: getHeaders()
+  });
+  if (!res.ok) throw new Error('Failed to submit report draft');
+  return res.json();
+}
+
+export async function approveReportDraft(reportDraftId: string, payload?: { comment?: string }) {
+  const res = await fetch(`${BASE_URL}/api/v1/report-drafts/${reportDraftId}/approve`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: payload ? JSON.stringify(payload) : undefined
+  });
+  if (!res.ok) throw new Error('Failed to approve report draft');
+  return res.json();
+}
+
+export async function rejectReportDraft(reportDraftId: string, payload: { comment: string }) {
+  const res = await fetch(`${BASE_URL}/api/v1/report-drafts/${reportDraftId}/reject`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('Failed to reject report draft');
+  return res.json();
+}
