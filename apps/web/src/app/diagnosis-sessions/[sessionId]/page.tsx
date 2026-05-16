@@ -7,7 +7,7 @@ import Link from "next/link";
 import { fetchDiagnosisSession } from "@/lib/api";
 import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
 
-// Deterministic mock data matching contracts/openapi.yaml
+// Deterministic fallback fixture matching contracts/openapi.yaml
 const mockData = {
   session: {
     id: "LP-01-SESSION",

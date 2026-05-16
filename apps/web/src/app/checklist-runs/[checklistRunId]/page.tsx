@@ -42,7 +42,7 @@ const mockChecklistRun = {
       description: "Clamp 동작 시 센서 앰프의 동작 표시등 점등 확인",
       expected_result: "센서 감지 시 녹색 LED 점등",
       status: "IN_PROGRESS",
-      field_note: "Clamp 솔레노이드 강제 on 후 확인 중. LED 점등 안됨.",
+      field_note: "현장 매뉴얼 안전 점검 절차에 따라 확인 중. LED 점등 안됨.",
       completed_by_user_id: null,
       completed_at: null
     },
