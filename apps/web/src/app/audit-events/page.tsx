@@ -13,18 +13,34 @@ const mockAuditEvents = [
   { id: "AE-9005", event_type: "AGENT_ANALYSIS_COMPLETED", severity: "INFO", resource_type: "AGENT_RUN", actor: "SYSTEM", created_at: "2026-05-15T09:12:00Z", payload: '{"run_id": "RUN-087", "risk": "LOW"}' }
 ];
 
+function payloadPreview(payload: unknown) {
+  if (typeof payload === "string") return payload;
+  if (payload == null) return "{}";
+  try {
+    return JSON.stringify(payload);
+  } catch {
+    return "[unavailable]";
+  }
+}
+
+function formatTimestamp(value?: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
+}
+
 export default function AuditConsolePage() {
   const [auditEvents, setAuditEvents] = useState(mockAuditEvents);
 
   useEffect(() => {
     fetchAuditEvents()
       .then(data => {
-        if (data && data.items) {
+        if (data && Array.isArray(data.items)) {
           setAuditEvents(data.items);
         }
       })
       .catch((err) => {
-        console.warn('Backend unavailable, falling back to deterministic fixture', err);
+        console.warn('Backend unavailable, using deterministic reference data', err);
       });
   }, []);
 
@@ -92,7 +108,7 @@ export default function AuditConsolePage() {
                     <div className="flex flex-col gap-1">
                       <span className="font-mono text-[#00e5ff] text-xs">{event.id}</span>
                       <span className="text-[10px] text-slate-500">
-                        {new Date(event.created_at).toLocaleString()}
+                        {formatTimestamp(event.created_at)}
                       </span>
                     </div>
                   </td>
@@ -106,8 +122,8 @@ export default function AuditConsolePage() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full border ${
-                      event.severity === 'HIGH' ? 'bg-[#ff3366]/10 text-[#ff3366] border-[#ff3366]/30' :
-                      event.severity === 'MEDIUM' ? 'bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/30' :
+                      event.severity === 'HIGH' || event.severity === 'SECURITY' || event.severity === 'ERROR' ? 'bg-[#ff3366]/10 text-[#ff3366] border-[#ff3366]/30' :
+                      event.severity === 'MEDIUM' || event.severity === 'WARNING' ? 'bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/30' :
                       'bg-[#00cc66]/10 text-[#00cc66] border-[#00cc66]/30'
                     }`}>
                       {event.severity}
@@ -115,19 +131,19 @@ export default function AuditConsolePage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      {event.actor === 'SYSTEM' ? (
+                      {(event.actor ?? 'SYSTEM') === 'SYSTEM' ? (
                         <Cpu className="w-3 h-3 text-slate-500" />
                       ) : (
                         <User className="w-3 h-3 text-slate-400" />
                       )}
-                      <span className={event.actor === 'SYSTEM' ? 'text-slate-500 font-mono text-[10px]' : 'text-slate-300 text-xs'}>
-                        {event.actor}
+                      <span className={(event.actor ?? 'SYSTEM') === 'SYSTEM' ? 'text-slate-500 font-mono text-[10px]' : 'text-slate-300 text-xs'}>
+                        {event.actor ?? 'SYSTEM'}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <code className="text-[10px] font-mono text-slate-400 bg-[#050b14] p-1.5 rounded border border-[#1a2c4d] block max-w-xs truncate" title={event.payload}>
-                      {event.payload}
+                    <code className="text-[10px] font-mono text-slate-400 bg-[#050b14] p-1.5 rounded border border-[#1a2c4d] block max-w-xs truncate" title={payloadPreview(event.payload)}>
+                      {payloadPreview(event.payload)}
                     </code>
                   </td>
                 </tr>

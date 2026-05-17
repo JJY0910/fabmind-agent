@@ -2,43 +2,60 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchIncidentList } from "@/lib/api";
+import { createReferenceListResponse, fetchIncidentList } from "@/lib/api";
 import { ShieldAlert, AlertTriangle, ChevronRight, CheckSquare, FileText, Clock } from "lucide-react";
 import Link from "next/link";
 
 const fallbackIncidents = [
-  { id: "INC-LP-01", equipment_code: "LP-01", alarm_code: "LP-CLAMP-014", title: "Clamp Sensor Misalignment", severity: "HIGH", status: "IN_PROGRESS", opened_at: new Date(Date.now() - 3600000).toISOString(), updated_at: new Date(Date.now() - 1800000).toISOString(), linked_diagnosis_session_id: "LP-01-SESSION", linked_checklist_run_id: "RUN-LP-01", linked_report_draft_id: "RPT-LP-01" },
-  { id: "INC-LP-02", equipment_code: "LP-02", alarm_code: "ECAT-STATE-021", title: "EtherCAT Slave PRE-OP Lock", severity: "HIGH", status: "OPEN", opened_at: new Date(Date.now() - 7200000).toISOString(), updated_at: new Date(Date.now() - 7000000).toISOString(), linked_diagnosis_session_id: "LP-02-SESSION", linked_checklist_run_id: null, linked_report_draft_id: null },
+  { incident_id: "INC-LP-01", equipment_code: "LP-01", alarm_code: "LP-CLAMP-014", title: "Clamp Sensor Misalignment", risk_level: "HIGH", status: "CHECKLIST_IN_PROGRESS", opened_at: new Date(Date.now() - 3600000).toISOString(), updated_at: new Date(Date.now() - 1800000).toISOString(), diagnosis_session_id: "LP-01-SESSION", linked_checklist_run_id: "RUN-LP-01", linked_report_draft_id: "RPT-LP-01" },
+  { incident_id: "INC-LP-02", equipment_code: "LP-02", alarm_code: "ECAT-STATE-021", title: "EtherCAT Slave PRE-OP Lock", risk_level: "HIGH", status: "OPEN", opened_at: new Date(Date.now() - 7200000).toISOString(), updated_at: new Date(Date.now() - 7000000).toISOString(), diagnosis_session_id: "LP-02-SESSION", linked_checklist_run_id: null, linked_report_draft_id: null },
 ];
+
+type DataMode = "loading" | "live" | "reference" | "empty";
+const ACTIVE_STATUSES = new Set(["OPEN", "TRIAGED", "CHECKLIST_IN_PROGRESS", "REPORT_SUBMITTED"]);
+
+function formatDate(value?: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleDateString();
+}
+
+function formatTime(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString();
+}
 
 export default function ActiveIncidentsPage() {
   const [incidents, setIncidents] = useState<any[]>([]);
+  const [apiTotal, setApiTotal] = useState(0);
+  const [dataMode, setDataMode] = useState<DataMode>("loading");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchIncidentList()
       .then(res => {
-        if (res && res.data && Array.isArray(res.data)) {
-          setIncidents(res.data);
-        } else if (Array.isArray(res)) {
-          setIncidents(res);
-        } else {
-          setIncidents(fallbackIncidents);
-        }
+        setIncidents(res.items);
+        setApiTotal(res.total);
+        setDataMode(res.items.length > 0 ? "live" : "empty");
       })
       .catch(err => {
-        console.warn("Backend unavailable, using deterministic fallback fixture", err);
-        setIncidents(fallbackIncidents);
-        setError("Backend API unavailable. Displaying deterministic fallback fixture.");
+        console.warn("Backend unavailable, using deterministic reference data", err);
+        const reference = createReferenceListResponse(fallbackIncidents);
+        const message = err instanceof Error ? err.message : "Backend API unavailable";
+        setIncidents(reference.items);
+        setApiTotal(reference.total);
+        setDataMode("reference");
+        setError(`${message}. Showing deterministic reference data.`);
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  const totalOpen = incidents.filter(i => i.status === 'OPEN' || i.status === 'IN_PROGRESS').length;
-  const highRisk = incidents.filter(i => i.severity === 'HIGH').length;
+  const totalOpen = incidents.filter(i => ACTIVE_STATUSES.has(i.status)).length;
+  const highRisk = incidents.filter(i => (i.risk_level ?? i.severity) === 'HIGH').length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
@@ -56,6 +73,19 @@ export default function ActiveIncidentsPage() {
       {error && (
         <div className="bg-[#ffaa00]/10 border border-[#ffaa00]/30 text-[#ffaa00] p-3 rounded-md text-sm mb-4">
           {error}
+          <span className="block text-xs text-[#ffaa00]/80 mt-1">Operational API connection required for live incident records.</span>
+        </div>
+      )}
+
+      {dataMode === "live" && (
+        <div className="bg-[#00cc66]/10 border border-[#00cc66]/30 text-[#00cc66] p-3 rounded-md text-sm mb-4">
+          Backend API connected. Showing {apiTotal} tenant-scoped incident record{apiTotal === 1 ? "" : "s"}.
+        </div>
+      )}
+
+      {dataMode === "empty" && (
+        <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
+          Backend API connected. No active incidents matched the current query.
         </div>
       )}
 
@@ -106,7 +136,7 @@ export default function ActiveIncidentsPage() {
                 </tr>
               ) : (
                 incidents.map((inc) => (
-                  <tr key={inc.id} className="hover:bg-[#111d33]/50 transition-colors">
+                  <tr key={inc.incident_id ?? inc.id} className="hover:bg-[#111d33]/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium text-white">{inc.title}</div>
                       <div className="font-mono text-[#ff3366] text-xs mt-0.5">{inc.alarm_code}</div>
@@ -117,13 +147,13 @@ export default function ActiveIncidentsPage() {
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1.5 items-start">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border ${
-                          inc.status === 'IN_PROGRESS' ? 'bg-[#00e5ff]/10 text-[#00e5ff] border-[#00e5ff]/30' :
+                          inc.status === 'CHECKLIST_IN_PROGRESS' || inc.status === 'TRIAGED' ? 'bg-[#00e5ff]/10 text-[#00e5ff] border-[#00e5ff]/30' :
                           'bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/30'
                         }`}>
                           {inc.status}
                         </span>
-                        <span className={`text-[10px] font-bold ${inc.severity === 'HIGH' ? 'text-[#ff3366]' : 'text-[#ffaa00]'}`}>
-                          {inc.severity} SEVERITY
+                        <span className={`text-[10px] font-bold ${(inc.risk_level ?? inc.severity) === 'HIGH' ? 'text-[#ff3366]' : 'text-[#ffaa00]'}`}>
+                          {inc.risk_level ?? inc.severity ?? "UNKNOWN"} SEVERITY
                         </span>
                       </div>
                     </td>
@@ -134,18 +164,16 @@ export default function ActiveIncidentsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500">
-                      <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(inc.opened_at).toLocaleDateString()}</div>
-                      <div className="text-slate-600 ml-4">{new Date(inc.opened_at).toLocaleTimeString()}</div>
+                      <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatDate(inc.opened_at)}</div>
+                      <div className="text-slate-600 ml-4">{formatTime(inc.opened_at)}</div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {inc.linked_diagnosis_session_id ? (
-                        <Link href={`/diagnosis-sessions/${inc.linked_diagnosis_session_id}`} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-black rounded text-xs font-bold transition-colors shadow-[0_0_10px_rgba(0,229,255,0.2)]">
+                      {(inc.diagnosis_session_id ?? inc.linked_diagnosis_session_id) ? (
+                        <Link href={`/diagnosis-sessions/${inc.diagnosis_session_id ?? inc.linked_diagnosis_session_id}`} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#00e5ff] hover:bg-[#00e5ff]/90 text-black rounded text-xs font-bold transition-colors shadow-[0_0_10px_rgba(0,229,255,0.2)]">
                           Triage
                         </Link>
                       ) : (
-                        <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] text-white rounded text-xs font-medium transition-colors">
-                          Create Session
-                        </button>
+                        <span className="text-xs text-slate-600">No linked session</span>
                       )}
                     </td>
                   </tr>

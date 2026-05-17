@@ -1,5 +1,85 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
+export type ListSource = "api" | "fallback";
+
+export type NormalizedListResponse<T> = {
+  items: T[];
+  total: number;
+  limit?: number;
+  offset?: number;
+  source: ListSource;
+};
+
+type NormalizeListOptions = {
+  allowArray?: boolean;
+};
+
+export function normalizeListResponse<T>(
+  payload: unknown,
+  options: NormalizeListOptions = {},
+): NormalizedListResponse<T> {
+  if (payload && typeof payload === "object" && Array.isArray((payload as { items?: unknown }).items)) {
+    const response = payload as { items: T[]; total?: number; limit?: number; offset?: number };
+    return {
+      items: response.items,
+      total: typeof response.total === "number" ? response.total : response.items.length,
+      limit: typeof response.limit === "number" ? response.limit : undefined,
+      offset: typeof response.offset === "number" ? response.offset : undefined,
+      source: "api",
+    };
+  }
+
+  if (options.allowArray && Array.isArray(payload)) {
+    return {
+      items: payload as T[],
+      total: payload.length,
+      source: "api",
+    };
+  }
+
+  throw new Error("Malformed list response from API");
+}
+
+export function createReferenceListResponse<T>(items: T[]): NormalizedListResponse<T> {
+  return {
+    items,
+    total: items.length,
+    limit: items.length,
+    offset: 0,
+    source: "fallback",
+  };
+}
+
+async function readErrorDetail(res: Response) {
+  try {
+    const contentType = res.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const body = await res.json();
+      const detail = body?.detail ?? body?.message;
+      if (typeof detail === "string") return detail;
+      if (detail != null) return JSON.stringify(detail).slice(0, 240);
+      return undefined;
+    }
+
+    const text = await res.text();
+    return text ? text.slice(0, 240) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function parseJsonResponse(res: Response, label: string) {
+  if (!res.ok) {
+    const detail = await readErrorDetail(res);
+    throw new Error(detail ? `${label} failed with HTTP ${res.status}: ${detail}` : `${label} failed with HTTP ${res.status}`);
+  }
+  try {
+    return await res.json();
+  } catch {
+    throw new Error(`${label} returned invalid JSON`);
+  }
+}
+
 function getHeaders(): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -27,8 +107,7 @@ export async function fetchAuditEvents() {
   const res = await fetch(`${BASE_URL}/api/v1/audit-events`, {
     headers: getHeaders(),
   });
-  if (!res.ok) throw new Error('Failed to fetch audit events');
-  return res.json();
+  return parseJsonResponse(res, "Fetch audit events");
 }
 
 export async function fetchDiagnosisSession(sessionId: string) {
@@ -106,8 +185,7 @@ export async function rejectReportDraft(reportDraftId: string, payload: { commen
 export async function fetchEquipmentList(params?: Record<string, string>) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : '';
   const res = await fetch(`${BASE_URL}/api/v1/equipment${query}`, { headers: getHeaders() });
-  if (!res.ok) throw new Error('Failed to fetch equipment list');
-  return res.json();
+  return normalizeListResponse<any>(await parseJsonResponse(res, "Fetch equipment list"));
 }
 
 export async function fetchEquipmentDetail(equipmentId: string) {
@@ -119,8 +197,7 @@ export async function fetchEquipmentDetail(equipmentId: string) {
 export async function fetchIncidentList(params?: Record<string, string>) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : '';
   const res = await fetch(`${BASE_URL}/api/v1/incidents${query}`, { headers: getHeaders() });
-  if (!res.ok) throw new Error('Failed to fetch incident list');
-  return res.json();
+  return normalizeListResponse<any>(await parseJsonResponse(res, "Fetch incident list"));
 }
 
 export async function fetchIncidentDetail(incidentId: string) {
@@ -132,26 +209,22 @@ export async function fetchIncidentDetail(incidentId: string) {
 export async function fetchChecklistRunList(params?: Record<string, string>) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : '';
   const res = await fetch(`${BASE_URL}/api/v1/checklist-runs${query}`, { headers: getHeaders() });
-  if (!res.ok) throw new Error('Failed to fetch checklist run list');
-  return res.json();
+  return normalizeListResponse<any>(await parseJsonResponse(res, "Fetch checklist run list"));
 }
 
 export async function fetchReportDraftList(params?: Record<string, string>) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : '';
   const res = await fetch(`${BASE_URL}/api/v1/report-drafts${query}`, { headers: getHeaders() });
-  if (!res.ok) throw new Error('Failed to fetch report draft list');
-  return res.json();
+  return normalizeListResponse<any>(await parseJsonResponse(res, "Fetch report draft list"));
 }
 
 export async function fetchApprovalQueue(params?: Record<string, string>) {
   const query = params ? `?${new URLSearchParams(params).toString()}` : '';
   const res = await fetch(`${BASE_URL}/api/v1/approvals${query}`, { headers: getHeaders() });
-  if (!res.ok) throw new Error('Failed to fetch approval queue');
-  return res.json();
+  return normalizeListResponse<any>(await parseJsonResponse(res, "Fetch approval queue"));
 }
 
 export async function fetchSystemSafetySettings() {
   const res = await fetch(`${BASE_URL}/api/v1/system/safety-settings`, { headers: getHeaders() });
-  if (!res.ok) throw new Error('Failed to fetch system safety settings');
-  return res.json();
+  return parseJsonResponse(res, "Fetch system safety settings");
 }
