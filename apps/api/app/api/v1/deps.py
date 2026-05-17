@@ -61,6 +61,7 @@ def require_roles(*allowed_roles: str) -> Callable[[Request, CurrentUser, Sessio
                     "method": request.method,
                     "role": role_code,
                     "allowed_roles": list(allowed_roles),
+                    "path_params": {key: str(value) for key, value in request.path_params.items()},
                 },
             )
             db.commit()

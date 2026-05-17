@@ -10,6 +10,14 @@ export type NormalizedListResponse<T> = {
   source: ListSource;
 };
 
+export type AuthUser = {
+  id: string;
+  username: string;
+  display_name?: string | null;
+  role: "FIELD_ENGINEER" | "SENIOR_ENGINEER" | "ADMIN" | string;
+  tenant_id: string;
+};
+
 type NormalizeListOptions = {
   allowArray?: boolean;
 };
@@ -47,6 +55,28 @@ export function createReferenceListResponse<T>(items: T[]): NormalizedListRespon
     limit: items.length,
     offset: 0,
     source: "fallback",
+  };
+}
+
+function normalizeAuthUser(payload: unknown): AuthUser {
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Malformed current user response from API");
+  }
+  const user = payload as Record<string, unknown>;
+  if (
+    typeof user.id !== "string" ||
+    typeof user.username !== "string" ||
+    typeof user.role !== "string" ||
+    typeof user.tenant_id !== "string"
+  ) {
+    throw new Error("Malformed current user response from API");
+  }
+  return {
+    id: user.id,
+    username: user.username,
+    display_name: typeof user.display_name === "string" ? user.display_name : null,
+    role: user.role,
+    tenant_id: user.tenant_id,
   };
 }
 
@@ -110,6 +140,13 @@ export async function fetchAuditEvents() {
   return parseJsonResponse(res, "Fetch audit events");
 }
 
+export async function fetchCurrentUser(): Promise<AuthUser> {
+  const res = await fetch(`${BASE_URL}/api/v1/auth/me`, {
+    headers: getHeaders(),
+  });
+  return normalizeAuthUser(await parseJsonResponse(res, "Fetch current user"));
+}
+
 export async function fetchDiagnosisSession(sessionId: string) {
   const res = await fetch(`${BASE_URL}/api/v1/diagnosis-sessions/${sessionId}`, {
     headers: getHeaders(),
@@ -139,8 +176,7 @@ export async function fetchReportDraft(reportDraftId: string) {
   const res = await fetch(`${BASE_URL}/api/v1/report-drafts/${reportDraftId}`, {
     headers: getHeaders(),
   });
-  if (!res.ok) throw new Error('Failed to fetch report draft');
-  return res.json();
+  return parseJsonResponse(res, "Fetch report draft");
 }
 
 export async function updateChecklistItem(checklistRunId: string, itemId: string, payload: { status?: string, field_note?: string }) {
@@ -158,8 +194,7 @@ export async function submitReportDraft(reportDraftId: string) {
     method: 'POST',
     headers: getHeaders()
   });
-  if (!res.ok) throw new Error('Failed to submit report draft');
-  return res.json();
+  return parseJsonResponse(res, "Submit report draft");
 }
 
 export async function approveReportDraft(reportDraftId: string, payload?: { comment?: string }) {
@@ -168,8 +203,7 @@ export async function approveReportDraft(reportDraftId: string, payload?: { comm
     headers: getHeaders(),
     body: payload ? JSON.stringify(payload) : undefined
   });
-  if (!res.ok) throw new Error('Failed to approve report draft');
-  return res.json();
+  return parseJsonResponse(res, "Approve report draft");
 }
 
 export async function rejectReportDraft(reportDraftId: string, payload: { comment: string }) {
@@ -178,8 +212,7 @@ export async function rejectReportDraft(reportDraftId: string, payload: { commen
     headers: getHeaders(),
     body: JSON.stringify(payload)
   });
-  if (!res.ok) throw new Error('Failed to reject report draft');
-  return res.json();
+  return parseJsonResponse(res, "Reject report draft");
 }
 
 export async function fetchEquipmentList(params?: Record<string, string>) {
