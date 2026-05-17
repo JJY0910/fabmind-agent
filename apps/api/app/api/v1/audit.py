@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.v1.deps import ROLE_ADMIN, ROLE_SENIOR, require_roles
@@ -20,6 +20,7 @@ def list_audit_events(
     severity: str | None = None,
     resource_type: str | None = None,
     limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     current_user: User = Depends(require_roles(ROLE_SENIOR, ROLE_ADMIN)),
     db: Session = Depends(get_db),
 ) -> AuditEventListResponse:
@@ -37,17 +38,30 @@ def list_audit_events(
                 "resource_type": resource_type,
             },
             "limit": limit,
+            "offset": offset,
         },
     )
     db.commit()
 
-    query = select(AuditEvent).where(AuditEvent.tenant_id == current_user.tenant_id)
+    filters = [AuditEvent.tenant_id == current_user.tenant_id]
     if event_type:
-        query = query.where(AuditEvent.event_type == event_type)
+        filters.append(AuditEvent.event_type == event_type)
     if severity:
-        query = query.where(AuditEvent.severity == severity)
+        filters.append(AuditEvent.severity == severity)
     if resource_type:
-        query = query.where(AuditEvent.resource_type == resource_type)
+        filters.append(AuditEvent.resource_type == resource_type)
 
-    events = db.scalars(query.order_by(AuditEvent.created_at.desc()).limit(limit)).all()
-    return AuditEventListResponse(items=[AuditEventRead.model_validate(event) for event in events])
+    total = db.scalar(select(func.count()).select_from(AuditEvent).where(*filters)) or 0
+    events = db.scalars(
+        select(AuditEvent)
+        .where(*filters)
+        .order_by(AuditEvent.created_at.desc(), AuditEvent.id.desc())
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return AuditEventListResponse(
+        items=[AuditEventRead.model_validate(event) for event in events],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )

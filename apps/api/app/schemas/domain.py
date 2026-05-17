@@ -97,6 +97,9 @@ class AlarmCodeRead(BaseModel):
 
 class AlarmCodeListResponse(BaseModel):
     items: list[AlarmCodeRead]
+    total: int = 0
+    limit: int = 0
+    offset: int = 0
 
 
 class IoPointRead(BaseModel):
@@ -113,6 +116,9 @@ class IoPointRead(BaseModel):
 
 class IoPointListResponse(BaseModel):
     items: list[IoPointRead]
+    total: int = 0
+    limit: int = 0
+    offset: int = 0
 
 
 class EthercatDeviceRead(BaseModel):
@@ -128,6 +134,9 @@ class EthercatDeviceRead(BaseModel):
 
 class EthercatDeviceListResponse(BaseModel):
     items: list[EthercatDeviceRead]
+    total: int = 0
+    limit: int = 0
+    offset: int = 0
 
 
 EquipmentDataSeverity = Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
@@ -276,6 +285,9 @@ class AuditEventRead(BaseModel):
 
 class AuditEventListResponse(BaseModel):
     items: list[AuditEventRead]
+    total: int = 0
+    limit: int = 0
+    offset: int = 0
 
 
 DiagnosisStatus = Literal["CREATED", "ANALYZING", "ANALYSIS_READY", "INSUFFICIENT_EVIDENCE", "CLOSED"]
@@ -315,6 +327,9 @@ class DiagnosisSessionRead(BaseModel):
 
 class DiagnosisSessionListResponse(BaseModel):
     items: list[DiagnosisSessionRead]
+    total: int = 0
+    limit: int = 0
+    offset: int = 0
 
 
 AgentRunStatus = Literal["COMPLETED", "INSUFFICIENT_EVIDENCE", "SAFETY_BLOCKED", "FAILED"]

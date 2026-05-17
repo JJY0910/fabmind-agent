@@ -115,37 +115,66 @@ def get_equipment_detail(
 
 @router.get("/alarms", response_model=AlarmCodeListResponse)
 def list_alarms(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     current_user: User = Depends(require_roles(*READ_ROLES)),
     db: Session = Depends(get_db),
 ) -> AlarmCodeListResponse:
+    filters = [AlarmCode.tenant_id == current_user.tenant_id]
+    total = db.scalar(select(func.count()).select_from(AlarmCode).where(*filters)) or 0
     alarms = db.scalars(
-        select(AlarmCode).where(AlarmCode.tenant_id == current_user.tenant_id).order_by(AlarmCode.code)
+        select(AlarmCode).where(*filters).order_by(AlarmCode.code).limit(limit).offset(offset)
     ).all()
-    return AlarmCodeListResponse(items=[AlarmCodeRead.model_validate(alarm) for alarm in alarms])
+    return AlarmCodeListResponse(
+        items=[AlarmCodeRead.model_validate(alarm) for alarm in alarms],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/io-points", response_model=IoPointListResponse)
 def list_io_points(
+    limit: int = Query(default=100, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     current_user: User = Depends(require_roles(*READ_ROLES)),
     db: Session = Depends(get_db),
 ) -> IoPointListResponse:
+    filters = [IoPoint.tenant_id == current_user.tenant_id]
+    total = db.scalar(select(func.count()).select_from(IoPoint).where(*filters)) or 0
     io_points = db.scalars(
-        select(IoPoint).where(IoPoint.tenant_id == current_user.tenant_id).order_by(IoPoint.code)
+        select(IoPoint).where(*filters).order_by(IoPoint.code).limit(limit).offset(offset)
     ).all()
-    return IoPointListResponse(items=[IoPointRead.model_validate(point) for point in io_points])
+    return IoPointListResponse(
+        items=[IoPointRead.model_validate(point) for point in io_points],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/ethercat-devices", response_model=EthercatDeviceListResponse)
 def list_ethercat_devices(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     current_user: User = Depends(require_roles(*READ_ROLES)),
     db: Session = Depends(get_db),
 ) -> EthercatDeviceListResponse:
+    filters = [EthercatDevice.tenant_id == current_user.tenant_id]
+    total = db.scalar(select(func.count()).select_from(EthercatDevice).where(*filters)) or 0
     devices = db.scalars(
         select(EthercatDevice)
-        .where(EthercatDevice.tenant_id == current_user.tenant_id)
+        .where(*filters)
         .order_by(EthercatDevice.equipment_id, EthercatDevice.slave_no)
+        .limit(limit)
+        .offset(offset)
     ).all()
-    return EthercatDeviceListResponse(items=[EthercatDeviceRead.model_validate(device) for device in devices])
+    return EthercatDeviceListResponse(
+        items=[EthercatDeviceRead.model_validate(device) for device in devices],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 def _equipment_summary(equipment: Equipment, latest_session: DiagnosisSession | None = None) -> EquipmentSummary:

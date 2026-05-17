@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import UTC, datetime
 
@@ -31,6 +32,7 @@ ALLOWED_TRANSITIONS = {
     "CANCELLED": set(),
 }
 SEVERITY_RANK = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+logger = logging.getLogger(__name__)
 
 
 class IncidentLifecycleError(ValueError):
@@ -97,6 +99,16 @@ def create_incident_case(
             event_type="INCIDENT_LINKED_TO_DIAGNOSIS",
             payload={"diagnosis_session_id": str(diagnosis_session_id)},
         )
+    logger.info(
+        "incident_created",
+        extra={
+            "incident_id": str(incident.id),
+            "tenant_id": str(actor.tenant_id),
+            "equipment_code": equipment.code,
+            "alarm_code": alarm_code,
+            "severity": severity,
+        },
+    )
     return incident
 
 
@@ -239,7 +251,16 @@ def transition_incident_status(
         actor=actor,
         incident=incident,
         event_type="INCIDENT_STATUS_CHANGED",
-        payload={"from_status": previous_status, "to_status": target_status},
+            payload={"from_status": previous_status, "to_status": target_status},
+        )
+    logger.info(
+        "incident_status_changed",
+        extra={
+            "incident_id": str(incident.id),
+            "tenant_id": str(incident.tenant_id),
+            "from_status": previous_status,
+            "to_status": target_status,
+        },
     )
     if target_status == "CLOSED":
         _audit_incident(
@@ -285,6 +306,15 @@ def _audit_incident(
         severity=severity,
         payload=payload or {},
     )
+    if event_type.startswith("INCIDENT_LINKED"):
+        logger.info(
+            "incident_linked",
+            extra={
+                "incident_id": str(incident.id),
+                "tenant_id": str(incident.tenant_id),
+                "event_type": event_type,
+            },
+        )
 
 
 def _case_number(equipment_code: str, alarm_code: str, incident_id: uuid.UUID | None) -> str:

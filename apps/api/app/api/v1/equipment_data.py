@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -37,6 +38,7 @@ from app.services.equipment_data_adapter import (
 
 READ_ROLES = (ROLE_FIELD, ROLE_SENIOR, ROLE_ADMIN)
 INGESTION_ROLES = (ROLE_SENIOR, ROLE_ADMIN)
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/equipment-data", tags=["equipment-data"])
 
@@ -253,6 +255,14 @@ def list_ethercat_status_snapshots(
 
 
 def _audit_blocked_ingestion(db: Session, current_user: User, resource_type: str, reason: str) -> None:
+    logger.warning(
+        "equipment_data_ingestion_blocked",
+        extra={
+            "tenant_id": str(current_user.tenant_id),
+            "actor_user_id": str(current_user.id),
+            "resource_type": resource_type,
+        },
+    )
     create_audit_event(
         db,
         tenant_id=current_user.tenant_id,
