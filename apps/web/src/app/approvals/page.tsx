@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createReferenceListResponse, fetchApprovalQueue } from "@/lib/api";
-import { FileText, CheckCircle2, Clock, ShieldAlert, User, Activity } from "lucide-react";
+import { createReferenceListResponse, fetchApprovalQueue, fetchCurrentUser, type AuthUser } from "@/lib/api";
+import { FileText, CheckCircle2, Clock, User } from "lucide-react";
 import Link from "next/link";
 
 const fallbackApprovals = [
@@ -12,6 +12,10 @@ const fallbackApprovals = [
 ];
 
 type DataMode = "loading" | "live" | "reference" | "empty";
+
+function hasApprovalAuthority(user: AuthUser | null) {
+  return user?.role === "SENIOR_ENGINEER" || user?.role === "ADMIN";
+}
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
@@ -29,8 +33,23 @@ export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<any[]>([]);
   const [apiTotal, setApiTotal] = useState(0);
   const [dataMode, setDataMode] = useState<DataMode>("loading");
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then(user => {
+        setCurrentUser(user);
+        setPermissionError(null);
+      })
+      .catch(err => {
+        console.warn("Approval permissions unavailable", err);
+        setCurrentUser(null);
+        setPermissionError("Approval permissions unavailable. Senior/admin role required on report detail for final decisions.");
+      });
+  }, []);
 
   useEffect(() => {
     fetchApprovalQueue()
@@ -87,6 +106,18 @@ export default function ApprovalsPage() {
           Backend API connected. No reports are waiting for approval.
         </div>
       )}
+
+      <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
+        {currentUser ? (
+          hasApprovalAuthority(currentUser) ? (
+            <span>Signed in as {currentUser.display_name ?? currentUser.username}. Senior/admin approval actions are available on report detail pages.</span>
+          ) : (
+            <span>Signed in as {currentUser.display_name ?? currentUser.username}. Approval queue is read-only for field users; senior/admin role is required for final decisions.</span>
+          )
+        ) : (
+          <span>{permissionError ?? "Approval permissions unavailable."}</span>
+        )}
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
