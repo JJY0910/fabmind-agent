@@ -275,6 +275,9 @@ class AuditEvent(Base):
     __table_args__ = (
         CheckConstraint("severity IN ('INFO','WARNING','ERROR','SECURITY')", name="ck_audit_events_severity"),
         Index("idx_audit_events_tenant_created", "tenant_id", "created_at"),
+        Index("idx_audit_events_tenant_event_type_created", "tenant_id", "event_type", "created_at"),
+        Index("idx_audit_events_tenant_severity_created", "tenant_id", "severity", "created_at"),
+        Index("idx_audit_events_tenant_resource_created", "tenant_id", "resource_type", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -450,6 +453,7 @@ class ChecklistRun(Base):
         CheckConstraint("status IN ('CREATED','IN_PROGRESS','COMPLETED','BLOCKED')", name="ck_checklist_runs_status"),
         Index("idx_checklist_runs_tenant_session", "tenant_id", "diagnosis_session_id"),
         Index("idx_checklist_runs_agent_run", "tenant_id", "agent_run_id"),
+        Index("idx_checklist_runs_tenant_status_updated", "tenant_id", "status", "updated_at"),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -522,6 +526,7 @@ class ReportDraft(Base):
         CheckConstraint("status IN ('DRAFT','SUBMITTED','APPROVED','REJECTED')", name="ck_report_drafts_status"),
         Index("idx_report_drafts_tenant_session", "tenant_id", "diagnosis_session_id"),
         Index("idx_report_drafts_tenant_status", "tenant_id", "status"),
+        Index("idx_report_drafts_tenant_status_updated", "tenant_id", "status", "updated_at"),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -583,8 +588,10 @@ class EquipmentIncident(Base):
         CheckConstraint("severity IN ('LOW','MEDIUM','HIGH','CRITICAL')", name="ck_equipment_incidents_severity"),
         UniqueConstraint("tenant_id", "case_number", name="uq_equipment_incidents_tenant_case_number"),
         Index("idx_equipment_incidents_tenant_status_updated", "tenant_id", "status", "updated_at"),
+        Index("idx_equipment_incidents_tenant_updated_opened", "tenant_id", "updated_at", "opened_at"),
         Index("idx_equipment_incidents_equipment", "tenant_id", "equipment_id"),
         Index("idx_equipment_incidents_alarm_code", "tenant_id", "alarm_code"),
+        Index("idx_equipment_incidents_severity", "tenant_id", "severity"),
         Index("idx_equipment_incidents_primary_alarm", "tenant_id", "primary_alarm_event_id"),
     )
 

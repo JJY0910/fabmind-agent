@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+import uuid
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.approvals import router as approvals_router
 from app.api.v1.auth import router as auth_router
@@ -14,6 +16,15 @@ from app.api.v1.report_drafts import router as report_drafts_router
 from app.api.v1.system import router as system_router
 
 app = FastAPI(title="FabMind Agent API", version="1.0.0")
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 app.add_middleware(
     CORSMiddleware,

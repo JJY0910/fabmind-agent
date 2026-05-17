@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.v1.deps import ROLE_ADMIN, ROLE_FIELD, ROLE_SENIOR, require_roles
@@ -89,15 +89,26 @@ def create_diagnosis_session(
 
 @router.get("", response_model=DiagnosisSessionListResponse)
 def list_diagnosis_sessions(
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
     current_user: User = Depends(require_roles(*READ_WRITE_ROLES)),
     db: Session = Depends(get_db),
 ) -> DiagnosisSessionListResponse:
+    filters = [DiagnosisSession.tenant_id == current_user.tenant_id]
+    total = db.scalar(select(func.count()).select_from(DiagnosisSession).where(*filters)) or 0
     sessions = db.scalars(
         select(DiagnosisSession)
-        .where(DiagnosisSession.tenant_id == current_user.tenant_id)
-        .order_by(DiagnosisSession.created_at.desc())
+        .where(*filters)
+        .order_by(DiagnosisSession.created_at.desc(), DiagnosisSession.id.desc())
+        .limit(limit)
+        .offset(offset)
     ).all()
-    return DiagnosisSessionListResponse(items=[DiagnosisSessionRead.model_validate(item) for item in sessions])
+    return DiagnosisSessionListResponse(
+        items=[DiagnosisSessionRead.model_validate(item) for item in sessions],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{session_id}", response_model=DiagnosisSessionRead)

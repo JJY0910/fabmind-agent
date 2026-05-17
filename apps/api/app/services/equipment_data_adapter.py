@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -75,6 +76,8 @@ UNSAFE_VALUE_MARKERS = (
     "reset command",
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ReadOnlyEquipmentDataAdapter:
     """Inbound telemetry adapter. It has no equipment command channel."""
@@ -118,6 +121,16 @@ class ReadOnlyEquipmentDataAdapter:
         )
         create_or_link_incident_from_alarm_event(self.db, actor=actor, event=event, equipment=equipment)
         self.db.flush()
+        logger.info(
+            "equipment_alarm_event_ingested",
+            extra={
+                "event_id": str(event.id),
+                "tenant_id": str(actor.tenant_id),
+                "equipment_code": equipment.code,
+                "alarm_code": event.alarm_code,
+                "severity": event.severity,
+            },
+        )
         return event
 
     def ingest_io_snapshot(self, *, actor: User, payload: Any) -> EquipmentIOSnapshot:
@@ -153,6 +166,16 @@ class ReadOnlyEquipmentDataAdapter:
             },
         )
         self.db.flush()
+        logger.info(
+            "equipment_io_snapshot_ingested",
+            extra={
+                "snapshot_id": str(snapshot.id),
+                "tenant_id": str(actor.tenant_id),
+                "equipment_code": equipment.code,
+                "input_count": len(snapshot.observed_inputs),
+                "observed_output_count": len(snapshot.observed_outputs),
+            },
+        )
         return snapshot
 
     def ingest_ethercat_status_snapshot(
@@ -196,6 +219,16 @@ class ReadOnlyEquipmentDataAdapter:
             },
         )
         self.db.flush()
+        logger.info(
+            "ethercat_status_snapshot_ingested",
+            extra={
+                "snapshot_id": str(snapshot.id),
+                "tenant_id": str(actor.tenant_id),
+                "equipment_code": equipment.code,
+                "master_state": snapshot.master_state,
+                "link_status": snapshot.link_status,
+            },
+        )
         return snapshot
 
     def _resolve_equipment(

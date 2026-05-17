@@ -19,6 +19,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /api/v1/health/ready:
+    get:
+      summary: Readiness check
+      security: []
+      responses:
+        '200':
+          description: Service readiness
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReadyResponse'
   /api/v1/auth/login:
     post:
       summary: User login
@@ -94,6 +105,13 @@ paths:
   /api/v1/alarms:
     get:
       summary: List alarm codes
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
           description: Alarm code list
@@ -106,11 +124,21 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/AlarmCode'
+                  total: { type: integer }
+                  limit: { type: integer }
+                  offset: { type: integer }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/io-points:
     get:
       summary: List I/O points
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
           description: I/O point list
@@ -123,11 +151,21 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/IoPoint'
+                  total: { type: integer }
+                  limit: { type: integer }
+                  offset: { type: integer }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/ethercat-devices:
     get:
       summary: List EtherCAT devices
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
           description: EtherCAT device list
@@ -140,11 +178,21 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/EthercatDevice'
+                  total: { type: integer }
+                  limit: { type: integer }
+                  offset: { type: integer }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
   /api/v1/diagnosis-sessions:
     get:
       summary: List diagnosis sessions
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
           description: Diagnosis session list
@@ -157,6 +205,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/DiagnosisSession'
+                  total: { type: integer }
+                  limit: { type: integer }
+                  offset: { type: integer }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
     post:
@@ -769,18 +820,16 @@ paths:
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
           description: Audit events
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/AuditEvent'
+                $ref: '#/components/schemas/AuditEventListResponse'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
 components:
@@ -817,6 +866,22 @@ components:
       properties:
         status: { type: string, enum: [ok] }
         service: { type: string }
+    HealthReadyResponse:
+      type: object
+      required:
+        - status
+        - service
+        - database
+        - external_ai_enabled
+        - equipment_control_enabled
+        - read_only_diagnostics
+      properties:
+        status: { type: string, enum: [ready] }
+        service: { type: string }
+        database: { type: string, enum: [ok] }
+        external_ai_enabled: { type: boolean }
+        equipment_control_enabled: { type: boolean }
+        read_only_diagnostics: { type: boolean }
     LoginRequest:
       type: object
       required: [username, password]
@@ -1550,6 +1615,16 @@ components:
         severity: { type: string, enum: [INFO, WARNING, ERROR, SECURITY] }
         payload: { type: object }
         created_at: { type: string, format: date-time }
+    AuditEventListResponse:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/AuditEvent' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
     ErrorResponse:
       type: object
       required: [error_code, message]
