@@ -2,43 +2,53 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchEquipmentList } from "@/lib/api";
+import { createReferenceListResponse, fetchEquipmentList } from "@/lib/api";
 import { Activity, Database, AlertTriangle, ShieldCheck, ChevronRight, Server } from "lucide-react";
 import Link from "next/link";
 
 const fallbackEquipment = [
-  { id: "LP-01", equipment_code: "LP-01", equipment_name: "Load Port 01", equipment_type: "LOAD_PORT", subsystem: "FOUP Clamp", operational_status: "ALARM", current_alarm_code: "LP-CLAMP-014", risk_level: "HIGH", updated_at: new Date().toISOString(), linked_diagnosis_session_id: "LP-01-SESSION" },
-  { id: "FC-11", equipment_code: "FC-11", equipment_name: "FOUP Clamp 11", equipment_type: "FOUP_CLAMP", subsystem: "EtherCAT I/O", operational_status: "NORMAL", current_alarm_code: null, risk_level: "LOW", updated_at: new Date().toISOString(), linked_diagnosis_session_id: null },
-  { id: "LP-02", equipment_code: "LP-02", equipment_name: "Load Port 02", equipment_type: "LOAD_PORT", subsystem: "EtherCAT I/O", operational_status: "WARNING", current_alarm_code: "ECAT-WARN-01", risk_level: "MEDIUM", updated_at: new Date(Date.now() - 3600000).toISOString(), linked_diagnosis_session_id: "LP-02-SESSION" }
+  { id: "LP-01", equipment_code: "LP-01", equipment_name: "Load Port 01", equipment_type: "LOAD_PORT", subsystem: "FOUP Clamp", operational_status: "ALARM", current_alarm_code: "LP-CLAMP-014", risk_level: "HIGH", last_seen_at: new Date().toISOString(), linked_diagnosis_session_id: "LP-01-SESSION" },
+  { id: "FC-11", equipment_code: "FC-11", equipment_name: "FOUP Clamp 11", equipment_type: "FOUP_CLAMP", subsystem: "EtherCAT I/O", operational_status: "NORMAL", current_alarm_code: null, risk_level: "LOW", last_seen_at: new Date().toISOString(), linked_diagnosis_session_id: null },
+  { id: "LP-02", equipment_code: "LP-02", equipment_name: "Load Port 02", equipment_type: "LOAD_PORT", subsystem: "EtherCAT I/O", operational_status: "WARNING", current_alarm_code: "ECAT-WARN-01", risk_level: "MEDIUM", last_seen_at: new Date(Date.now() - 3600000).toISOString(), linked_diagnosis_session_id: "LP-02-SESSION" }
 ];
+
+type DataMode = "loading" | "live" | "reference" | "empty";
+
+function formatTimestamp(value?: string | null) {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString();
+}
 
 export default function EquipmentPage() {
   const [equipmentList, setEquipmentList] = useState<any[]>([]);
+  const [apiTotal, setApiTotal] = useState(0);
+  const [dataMode, setDataMode] = useState<DataMode>("loading");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEquipmentList()
       .then(res => {
-        if (res && res.data && Array.isArray(res.data)) {
-          setEquipmentList(res.data);
-        } else if (Array.isArray(res)) {
-          setEquipmentList(res);
-        } else {
-          setEquipmentList(fallbackEquipment);
-        }
+        setEquipmentList(res.items);
+        setApiTotal(res.total);
+        setDataMode(res.items.length > 0 ? "live" : "empty");
       })
       .catch(err => {
-        console.warn("Backend unavailable, using deterministic fallback fixture", err);
-        setEquipmentList(fallbackEquipment);
-        setError("Backend API unavailable. Displaying deterministic fallback fixture.");
+        console.warn("Backend unavailable, using deterministic reference data", err);
+        const reference = createReferenceListResponse(fallbackEquipment);
+        const message = err instanceof Error ? err.message : "Backend API unavailable";
+        setEquipmentList(reference.items);
+        setApiTotal(reference.total);
+        setDataMode("reference");
+        setError(`${message}. Showing deterministic reference data.`);
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  const total = equipmentList.length;
+  const total = dataMode === "live" || dataMode === "empty" ? apiTotal : equipmentList.length;
   const inAlarm = equipmentList.filter(e => e.operational_status === 'ALARM').length;
 
   return (
@@ -57,6 +67,19 @@ export default function EquipmentPage() {
       {error && (
         <div className="bg-[#ffaa00]/10 border border-[#ffaa00]/30 text-[#ffaa00] p-3 rounded-md text-sm mb-4">
           {error}
+          <span className="block text-xs text-[#ffaa00]/80 mt-1">Operational API connection required for live records.</span>
+        </div>
+      )}
+
+      {dataMode === "live" && (
+        <div className="bg-[#00cc66]/10 border border-[#00cc66]/30 text-[#00cc66] p-3 rounded-md text-sm mb-4">
+          Backend API connected. Showing live read-only equipment records.
+        </div>
+      )}
+
+      {dataMode === "empty" && (
+        <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
+          Backend API connected. No equipment records matched the current query.
         </div>
       )}
 
@@ -115,8 +138,11 @@ export default function EquipmentPage() {
                   <td colSpan={6} className="px-4 py-8 text-center text-slate-500">No equipment found in registry.</td>
                 </tr>
               ) : (
-                equipmentList.map((eq) => (
-                  <tr key={eq.id} className="hover:bg-[#111d33]/50 transition-colors">
+                equipmentList.map((eq, index) => {
+                  const equipmentKey = eq.id ?? eq.equipment_id ?? eq.equipment_code ?? `equipment-${index}`;
+                  const sessionId = eq.linked_diagnosis_session_id ?? eq.diagnosis_session_id;
+                  return (
+                  <tr key={equipmentKey} className="hover:bg-[#111d33]/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-mono text-[#00e5ff] font-medium">{eq.equipment_code}</div>
                       <div className="text-xs text-slate-500">{eq.equipment_name}</div>
@@ -142,11 +168,11 @@ export default function EquipmentPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500">
-                      {new Date(eq.updated_at).toLocaleString()}
+                      {formatTimestamp(eq.last_seen_at ?? eq.updated_at)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {eq.linked_diagnosis_session_id ? (
-                        <Link href={`/diagnosis-sessions/${eq.linked_diagnosis_session_id}`} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] text-[#00e5ff] rounded text-xs font-medium transition-colors">
+                      {sessionId ? (
+                        <Link href={`/diagnosis-sessions/${sessionId}`} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] text-[#00e5ff] rounded text-xs font-medium transition-colors">
                           <Activity className="w-3.5 h-3.5" />
                           View Session
                         </Link>
@@ -155,7 +181,7 @@ export default function EquipmentPage() {
                       )}
                     </td>
                   </tr>
-                ))
+                )})
               )}
             </tbody>
           </table>

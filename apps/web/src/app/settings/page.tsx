@@ -15,27 +15,53 @@ const fallbackSettings = {
   deterministic_engine_enabled: true,
   allowed_equipment_scope: ["LOAD_PORT", "FOUP_CLAMP", "ETHERCAT_IO"],
   policy_version: "v1.4.0",
-  updated_at: new Date().toISOString()
+  generated_at: new Date().toISOString()
 };
+
+type PolicyMode = "loading" | "live" | "reference" | "unavailable";
+
+function isSafetySettingsPayload(value: unknown) {
+  if (!value || typeof value !== "object") return false;
+  const policy = value as Record<string, unknown>;
+  return (
+    typeof policy.external_ai_enabled === "boolean" &&
+    typeof policy.equipment_control_enabled === "boolean" &&
+    typeof policy.interlock_bypass_allowed === "boolean" &&
+    typeof policy.output_forcing_allowed === "boolean" &&
+    typeof policy.human_approval_required === "boolean" &&
+    typeof policy.audit_logging_enabled === "boolean" &&
+    typeof policy.deterministic_engine_enabled === "boolean" &&
+    Array.isArray(policy.allowed_equipment_scope)
+  );
+}
+
+function formatTimestamp(value?: string | null) {
+  if (!value) return "Unavailable";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Unavailable" : date.toLocaleString();
+}
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
+  const [policyMode, setPolicyMode] = useState<PolicyMode>("loading");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSystemSafetySettings()
       .then(res => {
-        if (res && typeof res === 'object') {
-          setSettings(res);
-        } else {
-          setSettings(fallbackSettings);
+        if (!isSafetySettingsPayload(res)) {
+          throw new Error("Malformed safety settings response from API");
         }
+        setSettings(res);
+        setPolicyMode("live");
       })
       .catch(err => {
-        console.warn("Backend unavailable, using deterministic fallback fixture", err);
+        console.warn("Backend safety policy unavailable, using read-only reference", err);
+        const message = err instanceof Error ? err.message : "Backend API unavailable";
         setSettings(fallbackSettings);
-        setError("Backend API unavailable. Displaying deterministic fallback fixture.");
+        setPolicyMode("reference");
+        setError(`${message}. Showing read-only fallback reference.`);
       })
       .finally(() => {
         setLoading(false);
@@ -66,6 +92,13 @@ export default function SettingsPage() {
       {error && (
         <div className="bg-[#ffaa00]/10 border border-[#ffaa00]/30 text-[#ffaa00] p-3 rounded-md text-sm mt-4">
           {error}
+          <span className="block text-xs text-[#ffaa00]/80 mt-1">Operational API connection required for live safety policy confirmation.</span>
+        </div>
+      )}
+
+      {policyMode === "live" && (
+        <div className="bg-[#00cc66]/10 border border-[#00cc66]/30 text-[#00cc66] p-3 rounded-md text-sm mt-4">
+          Backend API connected. Displaying enforced read-only safety policy.
         </div>
       )}
 
@@ -78,7 +111,7 @@ export default function SettingsPage() {
             <CardHeader className="pb-3 border-b border-[#1a2c4d]">
               <CardTitle className="text-sm font-bold text-white flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#00cc66]" />
-                Agentic Boundary Policy (v{settings.policy_version})
+                Agentic Boundary Policy ({settings.policy_version ?? "policy version unavailable"})
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -102,16 +135,16 @@ export default function SettingsPage() {
                 desc="Write access to equipment PLCs or SECS/GEM."
               />
               <PolicyItem 
-                label="Interlock Bypass" 
+                label="Safety Interlock Defeat Capability"
                 value={settings.interlock_bypass_allowed} 
                 danger={true}
-                desc="Ability to bypass mechanical safety interlocks."
+                desc="State-changing safety mechanism defeat is not available from this interface."
               />
               <PolicyItem 
-                label="Output Forcing" 
+                label="Output State Change Capability"
                 value={settings.output_forcing_allowed} 
                 danger={true}
-                desc="Ability to manually force EtherCAT I/O states."
+                desc="State-changing EtherCAT I/O actions are not available from this interface."
               />
               <PolicyItem 
                 label="Human Approval Required" 
@@ -138,7 +171,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="pt-5">
               <div className="flex flex-wrap gap-2">
-                {settings.allowed_equipment_scope && settings.allowed_equipment_scope.map((scope: string) => (
+                {Array.isArray(settings.allowed_equipment_scope) && settings.allowed_equipment_scope.map((scope: string) => (
                   <span key={scope} className="px-3 py-1.5 bg-[#0a1322] border border-[#1a2c4d] text-slate-300 text-xs font-mono rounded">
                     {scope}
                   </span>
@@ -153,7 +186,7 @@ export default function SettingsPage() {
 
           <div className="text-right text-xs text-slate-500 flex items-center justify-end gap-1.5">
             <Clock className="w-3.5 h-3.5" />
-            Policy Generated: {new Date(settings.updated_at).toLocaleString()}
+            Policy Generated: {formatTimestamp(settings.generated_at ?? settings.updated_at)}
           </div>
 
         </div>
