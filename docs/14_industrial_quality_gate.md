@@ -32,6 +32,7 @@ This quality gate applies to FabMind Agent PRs. It keeps the product aligned wit
 | Request correlation ID | Pass | `X-Request-ID` is generated or preserved and included in responses | PR-25 tests | Structured log correlation across all services |
 | Readiness endpoint | Pass | `/api/v1/health/ready` performs lightweight service readiness without equipment connectivity | PR-25 tests | Deployment probe wiring |
 | CI checks | Pass / Needs hardening | Local pytest/typecheck/build/diff checks are required; Playwright runs in GitHub Actions | docs/15, docs/21 | Add acceptance test job for PR-28 static checks |
+| End-to-end operational flow acceptance | Pass / Needs hardening | Backend acceptance test connects telemetry, incident, diagnosis, checklist, report, approval, and audit records | PR-29 test, docs/22 | Browser-level full-flow acceptance and release packaging |
 | Deployment/containerization | Future release | No deployment packaging is claimed in the current acceptance baseline | docs/15, docs/21 | PR-30 packaging and release notes |
 | Observability/metrics | Future release | Current baseline has request IDs, readiness, logs, and audit records, but no metrics or alerting | docs/19, docs/21 | Metrics, dashboards, and alert policy |
 | Incident timeline UI | Future release | Incidents exist as first-class cases, but timeline visualization is not a dedicated module | docs/18, docs/21 | Incident timeline read model and UI |

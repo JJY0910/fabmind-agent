@@ -172,7 +172,7 @@ Exit criteria:
 
 ## Next Release Backlog
 
-### PR-29 End-to-End Operational Flow Acceptance Test
+### PR-29 End-to-End Operational Flow Acceptance Test - Current
 
 Purpose:
 Add an implementation-backed acceptance test for the full operational workflow across telemetry, incident, diagnosis, analysis, checklist, report, approval, and audit records.
@@ -183,8 +183,16 @@ Expected scope:
 - route-level frontend smoke linkage where practical
 - acceptance fixture alignment with Load Port / FOUP Clamp / EtherCAT I/O
 - no new product modules
+- acceptance note describing covered entities, audit events, RBAC expectations, and read-only boundary
 
-### PR-30 Release Candidate v0.2.0 Packaging / Release Notes
+Exit criteria:
+
+- PR-29 targeted backend acceptance test passes.
+- Full backend pytest passes.
+- Frontend typecheck/build pass.
+- No equipment-control endpoints are introduced.
+
+### PR-30 Release Candidate v0.2.0 Packaging / Release Notes - Next
 
 Purpose:
 Package the current release-candidate baseline with release notes and repeatable local execution guidance.
