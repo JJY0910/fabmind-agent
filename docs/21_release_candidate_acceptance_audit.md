@@ -24,6 +24,7 @@ Included capabilities:
 - Backend pagination, request correlation, readiness, and logging guardrails
 - Frontend API contract handling and degraded state visibility
 - RBAC hardening for approvals and incident transitions
+- End-to-end operational flow acceptance coverage
 
 Excluded capabilities:
 
@@ -48,6 +49,7 @@ Excluded capabilities:
 | Auditability is present | Accepted / Needs retention policy | audit_events table and audit tests across sensitive workflows |
 | Pagination/reliability hardening exists | Accepted / Needs load validation | PR-25 pagination, index, request ID, and readiness tests |
 | Frontend degraded data state is explicit | Accepted / Needs browser coverage | PR-26 API helper and page handling |
+| Backend operational flow connects records end to end | Accepted / Needs browser coverage | PR-29 acceptance test links telemetry, incident, diagnosis, checklist, report, approval, and audit trail |
 
 ## 4. Implemented Capability Map
 
@@ -66,6 +68,7 @@ Excluded capabilities:
 | Telemetry Adapter | Implemented / Needs hardening | `/api/v1/equipment-data/*` | equipment telemetry tables |
 | RBAC Enforcement | Implemented / Needs hardening | auth/me, approval, incident APIs | users, roles, audit_events |
 | Reliability Baseline | Implemented / Needs hardening | request middleware, readiness endpoint | app middleware and schema indexes |
+| Operational Flow Acceptance | Implemented / Needs hardening | backend acceptance test | telemetry, incident, diagnosis, checklist, report, approval, audit records |
 
 ## 5. Route Coverage
 
@@ -135,6 +138,7 @@ Backend tests cover:
 - performance/reliability
 - RBAC approval hardening
 - PR-28 static acceptance checks
+- PR-29 end-to-end operational flow acceptance
 
 Frontend validation covers:
 
@@ -183,6 +187,7 @@ Current workflow:
 ## 12. Known Limitations
 
 - Browser E2E validation depends on GitHub Actions because local WSL browser execution is constrained in this environment.
+- PR-29 validates the backend operational flow; browser-level full-flow acceptance remains future work.
 - Incident timeline visualization is not yet a dedicated module.
 - Field notes are checklist-item scoped; incident-level note aggregation remains future work.
 - Read-only real equipment connector specification is not complete.
@@ -192,7 +197,6 @@ Current workflow:
 
 ## 13. Next Release Backlog
 
-- End-to-end operational flow acceptance test
 - Release Candidate v0.2.0 Packaging / Release Notes
 - Observability / incident timeline hardening
 - Read-only real equipment connector specification
