@@ -1,129 +1,44 @@
 # Industrial Quality Gate
 
-This quality gate applies to future FabMind Agent PRs. It is intended to prevent drift into shallow work and to keep the product aligned with field operations, read-only diagnostics, evidence-based troubleshooting, deterministic analysis, human approval, and auditability.
+This quality gate applies to FabMind Agent PRs. It keeps the product aligned with field operations, read-only diagnostics, evidence-based troubleshooting, deterministic analysis, human approval, and auditability.
 
-## 1. Product Boundary Gate
+## Gate Status Legend
 
-A PR fails the gate if it violates any of the following:
+- **Pass**: Current implementation and tests satisfy the gate for the release-candidate baseline.
+- **Pass / Needs hardening**: Current implementation satisfies the gate, with operational depth still planned.
+- **Open**: The gate is not yet satisfied.
+- **Future release**: The gate is intentionally deferred from the current release-candidate baseline.
 
-- Scope expands beyond Load Port / FOUP Clamp / EtherCAT I/O without an approved requirements update.
-- Runtime-critical analysis depends on external AI or LLM calls.
-- The product exposes equipment-control behavior.
-- The product recommends state-changing maintenance actions.
-- The product weakens the human approval boundary for final reports.
-- The PR introduces real company data, customer data, or site-specific operational data.
+## Quality Gate Matrix
 
-## 2. Navigation Gate
+| Gate | Status | Evidence | Related tests/docs | Remaining work |
+|---|---|---|---|---|
+| No visible navigation 404 | Pass | Sidebar routes exist for Dashboard, Equipment, Active Incidents, Checklists, Approvals, Audit Console, and Settings | `apps/web/tests/e2e/navigation-hardening.spec.ts`, docs/13 | GitHub Actions remains browser validation source |
+| No unsafe user-facing wording | Pass / Needs hardening | README/docs/UI language is production-oriented and read-only | Product and safety scans in PR validation | Add CI-enforced scan in a future PR |
+| No external AI/LLM runtime dependency | Pass | Deterministic agent engine provides core analysis without external calls | PR-07 tests, docs/12 | Continue guarding new analysis code |
+| No equipment control | Pass | API/routes/settings expose diagnostics, telemetry ingestion, and workflow records only | OpenAPI safety tests, docs/17, docs/21 | Real connector spec must preserve inbound-only design |
+| No command/control endpoint | Pass | OpenAPI contains no equipment-control route family | PR-23, PR-24, PR-25, PR-28 tests | Keep OpenAPI safety test active |
+| Read-only telemetry ingestion only | Pass / Needs hardening | Alarm events, I/O snapshots, and EtherCAT status snapshots are stored as inbound telemetry | PR-23 tests, docs/17 | Real factory connector specification |
+| Deterministic agent behavior | Pass / Needs hardening | Rule scenarios produce repeatable hypotheses and insufficient-evidence outcomes | PR-07 tests | Expand rule coverage while preserving determinism |
+| Evidence traceability | Pass / Needs hardening | Hypotheses, checklist plans, reports, and audits reference stored workflow data | PR-07, PR-09, PR-10 tests | Stronger evidence completeness scoring |
+| Incident lifecycle traceability | Pass / Needs hardening | Incidents link alarm events, diagnosis sessions, checklists, reports, approvals, and audit context | PR-24 tests, docs/18 | Timeline view and assignment workflow |
+| Human approval | Pass | Final report approval/rejection is senior/admin controlled | PR-10, PR-27 tests | Reviewer assignment and SLA visibility |
+| RBAC enforcement | Pass / Needs hardening | Field users denied final approval and senior-only incident transitions; denial audit context exists | PR-27 tests, docs/20 | Centralized policy matrix in API documentation |
+| Audit logging | Pass / Needs hardening | Sensitive creation, analysis, checklist, report, approval, incident, telemetry, and denial events are logged | PR-03, PR-07, PR-09, PR-10, PR-11, PR-23, PR-24, PR-27 tests | Retention policy and actor/date search |
+| API contract coverage | Pass / Needs hardening | OpenAPI covers implemented production endpoints and avoids speculative paths | PR-20, PR-23, PR-24, PR-25, PR-28 tests | Generated contract drift check in CI |
+| DB/migration consistency | Pass / Needs hardening | Schema includes telemetry, incident, checklist, report, approval, and audit tables | PR-23, PR-24, PR-25 tests, docs/21 | Full migration replay smoke in CI |
+| Pagination/filter/sort | Pass / Needs hardening | List endpoints use bounded limits, offsets, and stable ordering where practical | PR-20, PR-23, PR-24, PR-25 tests | Broader status/equipment/date filters |
+| Frontend API contract handling | Pass / Needs hardening | Pages distinguish live API data, empty result, loading, and degraded reference state | PR-26 implementation, typecheck/build | Browser tests for degraded data mode |
+| Request correlation ID | Pass | `X-Request-ID` is generated or preserved and included in responses | PR-25 tests | Structured log correlation across all services |
+| Readiness endpoint | Pass | `/api/v1/health/ready` performs lightweight service readiness without equipment connectivity | PR-25 tests | Deployment probe wiring |
+| CI checks | Pass / Needs hardening | Local pytest/typecheck/build/diff checks are required; Playwright runs in GitHub Actions | docs/15, docs/21 | Add acceptance test job for PR-28 static checks |
+| Deployment/containerization | Future release | No deployment packaging is claimed in the current acceptance baseline | docs/15, docs/21 | PR-30 packaging and release notes |
+| Observability/metrics | Future release | Current baseline has request IDs, readiness, logs, and audit records, but no metrics or alerting | docs/19, docs/21 | Metrics, dashboards, and alert policy |
+| Incident timeline UI | Future release | Incidents exist as first-class cases, but timeline visualization is not a dedicated module | docs/18, docs/21 | Incident timeline read model and UI |
+| Real equipment connector specification | Future release | Telemetry adapter is read-only and implementation-backed; real connector specification is not complete | docs/17, docs/21 | Inbound connector contract and offline replay policy |
+| Offline factory network execution mode | Future release | No external runtime dependency is preserved, but offline execution packaging is not complete | docs/15, docs/21 | Offline installation, backup, and restore guidance |
 
-Required checks:
-
-- No visible navigation 404.
-- Every visible sidebar item maps to a real product module.
-- If a module is not implemented, remove it from visible navigation or implement a real route before merging.
-- Route labels must match the module named in the traceability matrix.
-- Active Incidents must use required route `/active-incidents`, not an untracked alternate path.
-
-Required future test:
-
-- A Playwright sidebar smoke test must click each visible navigation item and assert no 404 page is rendered.
-
-## 3. Safety Language Gate
-
-Required checks:
-
-- No unsafe instruction wording in user-facing docs or UI.
-- No interlock bypass instructions.
-- No output forcing instructions.
-- No servo command instructions.
-- No wording that implies the system can repair equipment without human decision.
-- Risky input examples may appear only as blocked-policy examples or negative tests.
-
-Review expectation:
-
-- If unsafe phrases appear in backend negative tests or policy-block examples, they must be clearly intentional and must assert blocked behavior.
-- User-facing operational content should describe safe read-only verification, escalation, approval, and audit logging.
-
-## 4. Agent Behavior Gate
-
-Required checks:
-
-- Deterministic agent behavior must be reproducible.
-- Every hypothesis must link to evidence.
-- Insufficient evidence must produce an explicit insufficient-evidence status.
-- Risky action requests must produce a safety-blocked result and audit event.
-- The agent must not be the sole source of safety decisions.
-- Final report conclusions must remain human-approved.
-
-## 5. Evidence Traceability Gate
-
-Required checks:
-
-- Diagnosis hypotheses must trace to alarm, I/O, EtherCAT, rule trace, or stored evidence.
-- Checklist items must trace to inspection plan items or evidence codes where available.
-- Report drafts must derive from stored diagnosis, agent analysis, evidence, and checklist results.
-- Audit events must link to resource type and resource ID where feasible.
-
-## 6. Audit Gate
-
-Sensitive actions must be audit logged:
-
-- login success/failure
-- permission denial
-- diagnosis session creation and detail access where feasible
-- agent analysis start/completion/blocked result
-- checklist run creation
-- checklist item status updates
-- report draft creation/submission
-- approval/rejection decisions
-- audit console access
-- future incident lifecycle transitions
-- future safety setting changes
-
-## 7. API Contract Gate
-
-Required checks:
-
-- Every backend route has typed request/response schemas.
-- `contracts/openapi.yaml` is updated when API behavior changes.
-- API routes remain under `/api/v1`.
-- Tenant-scoped data is filtered by `tenant_id`.
-- Field/senior/admin permissions are enforced in backend dependencies.
-- 401, 403, 404, and validation errors are covered where relevant.
-
-## 8. Test Coverage Gate
-
-Minimum test expectations:
-
-- backend pytest for new route behavior
-- tenant isolation test for tenant-scoped reads
-- RBAC test for sensitive routes
-- audit event creation test for sensitive actions
-- deterministic rule scenario tests when agent behavior changes
-- frontend typecheck/build for UI PRs
-- Playwright route smoke or E2E checks for navigation and workflow PRs
-
-## 9. Performance and Reliability Gate
-
-List endpoints and list UIs must be designed for operational scale:
-
-- list endpoints must support pagination
-- filtering by status, equipment, severity, or resource type where relevant
-- stable sort order
-- avoid unbounded list rendering
-- predictable loading states
-- predictable empty states
-- predictable error states
-- bounded default limits for audit and operational history
-- CI checks must pass before merge
-
-Initial performance expectations:
-
-- Default list page size should be bounded.
-- Queries should remain tenant-scoped and indexed where schema support exists.
-- Dashboard summary should avoid unbounded detail loading.
-- Frontend list pages should avoid rendering unlimited rows.
-
-## 10. PR Review Checklist
+## PR Review Checklist
 
 Before merge, the PR owner must answer:
 
@@ -135,3 +50,9 @@ Before merge, the PR owner must answer:
 - Which audit events were added or preserved?
 - Which validation commands passed?
 - Are any visible navigation gaps introduced or left unresolved?
+- Does the PR keep equipment integration read-only?
+- Does the PR avoid broad feature expansion outside Load Port / FOUP Clamp / EtherCAT I/O?
+
+## Release-Candidate Gate Position
+
+The current system meets the release-candidate acceptance baseline for implemented modules, subject to known limitations documented in `docs/21_release_candidate_acceptance_audit.md`. This is not a final production readiness claim; it is an implementation-backed acceptance status for the current scope.
