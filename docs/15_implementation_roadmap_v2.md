@@ -2,41 +2,35 @@
 
 This roadmap starts from PR-19 and focuses on closing industrial product completeness gaps without changing the safety boundary. Future work must remain read-only, deterministic, evidence-based, tenant-scoped, and human-in-the-loop.
 
-## PR-20 Backend Sidebar Module APIs
+## Completed Implementation PRs
 
-Goal:
-Create backend list APIs required by visible sidebar modules so frontend hub pages can use real contracts.
+### PR-20 Backend Sidebar Module APIs - Completed
 
-Required scope:
+Summary:
+Added backend list/detail APIs required by visible sidebar modules.
+
+Implemented scope:
 
 - `GET /api/v1/equipment`
+- `GET /api/v1/equipment/{equipment_id}`
 - `GET /api/v1/incidents`
+- `GET /api/v1/incidents/{incident_id}`
 - `GET /api/v1/checklist-runs`
-- `GET /api/v1/report-drafts` or `GET /api/v1/approvals`
+- `GET /api/v1/report-drafts`
+- `GET /api/v1/approvals`
 - `GET /api/v1/system/safety-settings`
 - OpenAPI updates
 - pytest coverage
 
-Implementation notes:
+Acceptance result:
+Backend contracts exist for sidebar modules and remain read-only.
 
-- Keep all queries tenant-scoped.
-- Add pagination and stable sort order to list APIs.
-- Support filtering by status, equipment, severity, or resource type where relevant.
-- Incidents may initially derive from diagnosis sessions, but the contract must support future incident lifecycle.
-- Safety settings must be read-only and show external AI disabled, equipment control disabled, audit enabled, and RBAC visibility.
+### PR-21 Frontend Sidebar Module Completion - Completed
 
-Exit criteria:
+Summary:
+Implemented visible sidebar hub pages so operational users do not hit missing module routes.
 
-- Backend tests pass.
-- OpenAPI reflects every route.
-- No equipment-control endpoints are introduced.
-
-## PR-21 Frontend Sidebar Module Completion
-
-Goal:
-Implement all visible sidebar hub pages so operational users do not hit 404 routes.
-
-Required routes:
+Implemented routes:
 
 - `/equipment`
 - `/active-incidents`
@@ -44,165 +38,207 @@ Required routes:
 - `/approvals`
 - `/settings`
 
-Implementation notes:
+Acceptance result:
+Visible navigation routes exist and map to real product modules.
 
-- Update sidebar Active Incidents href from `/incidents` to `/active-incidents`.
-- Use real API integration where backend contract exists.
-- Use deterministic contract-shaped fallback only when a backend contract is present but local API is unavailable.
-- Each hub page must include loading, empty, error, and success states.
-- Do not add feature modules outside the existing product direction.
+### PR-22 Navigation / Contract / E2E Hardening - Completed
 
-Exit criteria:
+Summary:
+Added browser smoke coverage for visible sidebar routes and representative workflow IDs.
 
-- No visible navigation item returns 404.
-- Frontend typecheck and build pass.
-- No unsafe instruction wording appears in UI.
-
-## PR-22 Navigation / Contract / E2E Hardening
-
-Goal:
-Make navigation and workflow coverage enforceable in CI.
-
-Required scope:
+Implemented scope:
 
 - visible sidebar navigation smoke test
-- no 404 test
-- route ID visibility test
-- OpenAPI/frontend DTO consistency review
-- GitHub Actions Playwright source of truth
+- direct route no-404 coverage
+- representative ID visibility checks
+- OpenAPI path coverage checks
+- stable sidebar selectors
 
-Implementation notes:
+Acceptance result:
+GitHub Actions Playwright is the source of truth for browser validation because local WSL Ubuntu 26.04 browser execution is constrained in this environment.
 
-- Local WSL Ubuntu 26.04 does not support Chromium through Playwright reliably in this environment, so GitHub Actions Playwright must be treated as the browser validation source of truth.
-- Local checks should still run typecheck/build and any non-browser unit checks.
+### PR-23 Read-Only Equipment Data Adapter - Completed
 
-Exit criteria:
+Summary:
+Introduced inbound telemetry ingestion for equipment-originated diagnostic evidence.
 
-- GitHub Actions Playwright passes.
-- Sidebar smoke test covers every visible navigation item.
-- Route labels and required route IDs match the traceability matrix.
-
-## PR-23 Read-Only Equipment Data Adapter
-
-Goal:
-Introduce a read-only adapter layer for equipment-related diagnostic snapshots.
-
-Required scope:
+Implemented scope:
 
 - alarm event ingestion
 - I/O snapshot ingestion
 - EtherCAT status snapshot ingestion
-- read-only adapter abstraction
-- no equipment control
+- read-only adapter service
+- unsafe command-like intent rejection
+- audit events for successful and blocked ingestion
+- OpenAPI, schema, migration, and pytest coverage
 
-Implementation notes:
+Acceptance result:
+Telemetry records can be stored in FabMind while preserving the no equipment-control boundary.
 
-- Adapter inputs must be explicitly read-only data snapshots.
-- No command, write, motion, or state-change method should exist in the interface.
-- Store or normalize input records in tenant-scoped structures.
-- Preserve deterministic analysis compatibility.
+### PR-24 Incident Lifecycle / Case Management - Completed
 
-Exit criteria:
+Summary:
+Converted incidents from a derived read model into a first-class operational case entity.
 
-- Adapter tests cover alarm, I/O, and EtherCAT snapshot ingestion.
-- No equipment-control method exists.
-- Safety boundary is documented in code and docs.
+Implemented scope:
 
-## PR-24 Incident Lifecycle / Case Management
+- `equipment_incidents` table/model/schema
+- incident list/detail/create endpoints
+- status transition endpoint
+- link endpoint for diagnosis/checklist/report/approval context
+- alarm-event-to-incident linking
+- diagnosis-session-to-incident linking
+- RBAC and audit coverage
+
+Acceptance result:
+Operational cases can link telemetry, diagnosis, checklist, report, approval, and audit records.
+
+### PR-25 Performance / Reliability Hardening - Completed
+
+Summary:
+Hardened backend list behavior, request correlation, readiness, and query support.
+
+Implemented scope:
+
+- pagination consistency on operational list endpoints
+- safe limits and offsets
+- additional indexes for implemented filters/sorts
+- `X-Request-ID` middleware
+- `/api/v1/health/ready`
+- structured operational logging guardrails
+- OpenAPI safety checks
+
+Acceptance result:
+Backend APIs have bounded list behavior and lightweight readiness/correlation support.
+
+### PR-26 Frontend API Contract Tightening / Fallback Reduction - Completed
+
+Summary:
+Tightened frontend API usage so pages distinguish live backend data from degraded reference state.
+
+Implemented scope:
+
+- normalized paginated list response handling
+- backend error preservation
+- explicit backend-unavailable/degraded state on sidebar module pages
+- read-only settings rendering
+- audit payload rendering safety
+
+Acceptance result:
+Frontend pages no longer silently present reference data as live operational data.
+
+### PR-27 RBAC / Approval Hardening - Completed
+
+Summary:
+Hardened report approval and incident lifecycle authorization across backend and frontend.
+
+Implemented scope:
+
+- field user report approve/reject denial
+- senior/admin approve/reject success coverage
+- senior-only incident transition denial for field users
+- denial audit context
+- current-user role parsing in frontend API helper
+- conservative approval controls when role is unknown
+
+Acceptance result:
+Backend RBAC remains the enforcement source of truth, and frontend controls reflect authenticated role state conservatively.
+
+## Current PR
+
+### PR-28 System Acceptance / Release Candidate Audit - Current
 
 Goal:
-Add incident lifecycle support so active operational work is tracked across diagnosis, checklist, report, approval, and audit history.
+Audit implementation state against product requirements, traceability, quality gates, OpenAPI, DB schema, routes, and test coverage after PR-20 through PR-27.
 
 Required scope:
 
-- incident status model
-- links diagnosis/checklist/report/approval/audit
-- operational state transitions
-- active incident hub API/UI integration
-
-Implementation notes:
-
-- Incident states should be explicit and auditable.
-- Diagnosis sessions should remain source evidence, not be overwritten by incident state.
-- Transitions such as opened, in review, blocked, awaiting approval, resolved, and closed should be evaluated against safety and approval rules.
+- Refresh `docs/12_product_requirements_v1.md`
+- Refresh `docs/13_module_traceability_matrix.md`
+- Refresh `docs/14_industrial_quality_gate.md`
+- Refresh this roadmap
+- Add `docs/21_release_candidate_acceptance_audit.md`
+- Add lightweight static acceptance checks where useful
+- Verify product language and safety scans
 
 Exit criteria:
 
-- Incident lifecycle tests pass.
-- Tenant isolation tests pass.
-- Sensitive state transitions create audit events.
+- Backend pytest passes.
+- Frontend typecheck/build pass.
+- `git diff --check` passes.
+- Product language scan has no matches.
+- Safety phrase scan has no user-facing docs/UI matches.
+- Acceptance document identifies known limitations without claiming final production readiness.
 
-## PR-25 Performance / Reliability Hardening
+## Next Release Backlog
 
-Goal:
-Make list-heavy operational screens reliable under realistic usage.
+### PR-29 End-to-End Operational Flow Acceptance Test
 
-Required scope:
+Purpose:
+Add an implementation-backed acceptance test for the full operational workflow across telemetry, incident, diagnosis, analysis, checklist, report, approval, and audit records.
 
-- pagination
-- filters
-- stable sorting
-- loading/error states
-- structured logging
-- correlation IDs
+Expected scope:
 
-Implementation notes:
+- backend API flow test for the golden operational path
+- route-level frontend smoke linkage where practical
+- acceptance fixture alignment with Load Port / FOUP Clamp / EtherCAT I/O
+- no new product modules
 
-- Dashboard and list endpoints should avoid unbounded queries.
-- UI lists should avoid unbounded rendering.
-- Filters should include status/equipment/severity where relevant.
-- Errors should be visible, bounded, and operationally understandable.
+### PR-30 Release Candidate v0.2.0 Packaging / Release Notes
 
-Exit criteria:
+Purpose:
+Package the current release-candidate baseline with release notes and repeatable local execution guidance.
 
-- API defaults use bounded limits.
-- Frontend lists render predictably.
-- CI checks pass.
+Expected scope:
 
-## PR-26 RBAC / Approval Hardening
+- API container build
+- web container build
+- database migration execution path
+- environment variable documentation
+- health/readiness probe wiring
+- release notes with scope, known limitations, rollback notes, and validation checklist
 
-Goal:
-Strengthen role-bound approval behavior across backend and frontend.
+### PR-31 Observability / Incident Timeline Hardening
 
-Required scope:
+Purpose:
+Improve operational traceability across incident lifecycle events.
 
-- approval permissions tied to auth roles
-- no UI-only role simulation
-- audit logs for approval decisions
-- field user cannot approve through UI or API
-- senior/admin approval path verified
+Expected scope:
 
-Implementation notes:
+- incident timeline read model
+- correlation ID propagation into audit/log views
+- actor/date filters for audit console
+- assignment and handoff metadata
 
-- Backend remains source of truth for permissions.
-- UI must reflect role state from authenticated user context.
-- Permission denied outcomes must be visible and audit logged where feasible.
+### PR-32 Read-Only Real Equipment Connector Specification
 
-Exit criteria:
+Purpose:
+Define the factory integration contract for inbound telemetry without creating equipment-control capability.
 
-- RBAC tests pass.
-- Approval E2E covers field denial and senior/admin decision.
-- Audit events exist for approval decisions and denied access.
+Expected scope:
 
-## PR-27 Release Candidate v0.2.0
+- connector interface specification
+- supported source systems and payload envelopes
+- validation and rejection policy
+- offline and replay ingestion considerations
 
-Goal:
-Establish a release candidate that satisfies the PR-19 rebaseline.
+### PR-33 Offline Factory Network Execution Mode
 
-Required scope:
+Purpose:
+Document and validate execution in restricted factory networks.
 
-- no visible 404
-- all checks pass
-- no unsafe wording
-- documented operational workflow
-- requirements traceability reviewed
-- industrial quality gate reviewed
+Expected scope:
 
-Exit criteria:
+- no external runtime dependency check
+- local deployment profile
+- seed/reference data handling
+- operational backup and restore guidance
 
-- `npm run typecheck` passes.
-- `npm run build` passes.
-- backend pytest passes.
-- GitHub Actions Playwright passes.
-- language cleanup scan has no unresolved outward-facing product-positioning issues.
-- safety phrase scan has no unsafe user-facing wording.
+## Roadmap Guardrails
+
+- Keep the scope limited to Load Port / FOUP Clamp / EtherCAT I/O.
+- Do not add broad semiconductor fault domains without a requirements update.
+- Do not introduce equipment-control APIs or UI.
+- Do not add external AI runtime dependency for deterministic analysis.
+- Keep final report approval human-controlled.
+- Preserve audit logging for sensitive actions and denials.
