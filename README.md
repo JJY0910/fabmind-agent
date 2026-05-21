@@ -14,6 +14,17 @@ The platform is intentionally narrow:
 - **EtherCAT I/O** workflows for slave state, link, and signal mismatch investigation.
 - **Read-only diagnostics** only. The product does not send instructions to equipment or alter machine state.
 
+## Current Release Candidate Status
+
+FabMind Agent is currently packaged as the **v0.2.0 RC / operational acceptance baseline**. This status records the implementation-backed release-candidate scope for read-only diagnostics, deterministic rule analysis, human approval, and auditability. It is not a final deployment certification.
+
+Release-candidate references:
+
+- `docs/23_release_notes_v0_2_0.md`
+- `docs/24_release_candidate_validation_runbook.md`
+- `docs/21_release_candidate_acceptance_audit.md`
+- `docs/22_end_to_end_operational_flow_acceptance.md`
+
 ## Safety Boundaries
 
 - **No equipment control**: the system does not write to PLCs, initiate motion, alter outputs, or perform state-changing maintenance actions.
@@ -63,6 +74,7 @@ Backend:
 
 ```bash
 cd apps/api
+.venv/bin/pytest tests/test_pr30_release_candidate_packaging.py
 .venv/bin/pytest
 ```
 
@@ -90,7 +102,7 @@ git diff --check
 
 ## Release Direction
 
-PR-28 establishes the system acceptance and release-candidate audit baseline. The next release work should focus on end-to-end operational flow acceptance, deployment packaging, observability, incident timeline hardening, read-only connector specification, and offline factory network execution mode.
+PR-30 packages the v0.2.0 release candidate baseline with release notes, repeatable validation guidance, roadmap updates, release-candidate acceptance updates, and lightweight static checks. Next release work should focus on deployment/containerization, observability and incident timeline hardening, read-only connector specification, offline factory network execution mode, browser full operational flow acceptance, and migration replay CI.
 
 See:
 
@@ -100,3 +112,6 @@ See:
 - `docs/14_industrial_quality_gate.md`
 - `docs/15_implementation_roadmap_v2.md`
 - `docs/21_release_candidate_acceptance_audit.md`
+- `docs/22_end_to_end_operational_flow_acceptance.md`
+- `docs/23_release_notes_v0_2_0.md`
+- `docs/24_release_candidate_validation_runbook.md`

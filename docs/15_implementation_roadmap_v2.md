@@ -144,14 +144,12 @@ Implemented scope:
 Acceptance result:
 Backend RBAC remains the enforcement source of truth, and frontend controls reflect authenticated role state conservatively.
 
-## Current PR
+### PR-28 System Acceptance / Release Candidate Audit - Completed
 
-### PR-28 System Acceptance / Release Candidate Audit - Current
-
-Goal:
+Summary:
 Audit implementation state against product requirements, traceability, quality gates, OpenAPI, DB schema, routes, and test coverage after PR-20 through PR-27.
 
-Required scope:
+Implemented scope:
 
 - Refresh `docs/12_product_requirements_v1.md`
 - Refresh `docs/13_module_traceability_matrix.md`
@@ -161,41 +159,58 @@ Required scope:
 - Add lightweight static acceptance checks where useful
 - Verify product language and safety scans
 
-Exit criteria:
+Acceptance result:
 
-- Backend pytest passes.
-- Frontend typecheck/build pass.
-- `git diff --check` passes.
-- Product language scan has no matches.
-- Safety phrase scan has no user-facing docs/UI matches.
-- Acceptance document identifies known limitations without claiming final production readiness.
+System acceptance was documented as an operational acceptance baseline without a final deployment certification claim.
 
-## Next Release Backlog
+### PR-29 End-to-End Operational Flow Acceptance Test - Completed
 
-### PR-29 End-to-End Operational Flow Acceptance Test - Current
-
-Purpose:
+Summary:
 Add an implementation-backed acceptance test for the full operational workflow across telemetry, incident, diagnosis, analysis, checklist, report, approval, and audit records.
 
-Expected scope:
+Implemented scope:
 
 - backend API flow test for the golden operational path
-- route-level frontend smoke linkage where practical
 - acceptance fixture alignment with Load Port / FOUP Clamp / EtherCAT I/O
 - no new product modules
 - acceptance note describing covered entities, audit events, RBAC expectations, and read-only boundary
 
-Exit criteria:
+Acceptance result:
 
-- PR-29 targeted backend acceptance test passes.
-- Full backend pytest passes.
-- Frontend typecheck/build pass.
-- No equipment-control endpoints are introduced.
+Backend/TestClient operational flow acceptance connects telemetry, incident, diagnosis, checklist, report, approval, and audit records while preserving the read-only equipment boundary.
 
-### PR-30 Release Candidate v0.2.0 Packaging / Release Notes - Next
+## Current PR
+
+### PR-30 Release Candidate v0.2.0 Packaging / Release Notes - Current
 
 Purpose:
 Package the current release-candidate baseline with release notes and repeatable local execution guidance.
+
+Expected scope:
+
+- Add `docs/23_release_notes_v0_2_0.md`
+- Add `docs/24_release_candidate_validation_runbook.md`
+- Refresh README release-candidate status and validation links
+- Refresh release-candidate acceptance audit with PR-29 and PR-30 status
+- Add lightweight static release packaging checks
+- Preserve runtime behavior, API contract, database schema, and frontend UI behavior
+
+Exit criteria:
+
+- PR-30 targeted backend packaging test passes.
+- Full backend pytest passes.
+- Frontend typecheck/build pass.
+- `git diff --check` passes.
+- Product language scan has no matches.
+- Safety phrase scan has no user-facing docs/UI matches.
+- Release notes document known limitations without a final deployment certification claim.
+
+## Next Release Backlog
+
+### Deployment / Containerization
+
+Purpose:
+Create repeatable deployment packaging and operational startup guidance.
 
 Expected scope:
 
@@ -204,9 +219,8 @@ Expected scope:
 - database migration execution path
 - environment variable documentation
 - health/readiness probe wiring
-- release notes with scope, known limitations, rollback notes, and validation checklist
 
-### PR-31 Observability / Incident Timeline Hardening
+### Observability / Incident Timeline Hardening
 
 Purpose:
 Improve operational traceability across incident lifecycle events.
@@ -218,7 +232,7 @@ Expected scope:
 - actor/date filters for audit console
 - assignment and handoff metadata
 
-### PR-32 Read-Only Real Equipment Connector Specification
+### Read-Only Real Equipment Connector Specification
 
 Purpose:
 Define the factory integration contract for inbound telemetry without creating equipment-control capability.
@@ -230,7 +244,7 @@ Expected scope:
 - validation and rejection policy
 - offline and replay ingestion considerations
 
-### PR-33 Offline Factory Network Execution Mode
+### Offline Factory Network Execution Mode
 
 Purpose:
 Document and validate execution in restricted factory networks.
@@ -241,6 +255,29 @@ Expected scope:
 - local deployment profile
 - seed/reference data handling
 - operational backup and restore guidance
+
+### Browser Full Operational Flow Acceptance
+
+Purpose:
+Add browser-level coverage for the complete operational workflow after the current backend acceptance baseline.
+
+Expected scope:
+
+- authenticated browser workflow coverage
+- incident-to-diagnosis-to-checklist-to-report navigation checks
+- approval path confirmation
+- audit trail visibility checks
+
+### Migration Replay CI
+
+Purpose:
+Add CI coverage that validates schema migration replay in a fresh environment.
+
+Expected scope:
+
+- migration replay smoke job
+- seed integrity confirmation after replay
+- failure reporting for schema drift
 
 ## Roadmap Guardrails
 
