@@ -2,7 +2,7 @@
 
 ## 1. Audit Purpose
 
-This document records the release-candidate acceptance audit for FabMind Agent after PR-20 through PR-29, with PR-30 used to package the v0.2.0 release-candidate baseline. It establishes an operational acceptance baseline for the current implementation-backed scope.
+This document records the release-candidate acceptance audit for FabMind Agent after PR-20 through PR-30, with PR-31 used to package local deployment/containerization for the v0.2.0 release-candidate baseline. It establishes an operational acceptance baseline for the current implementation-backed scope.
 
 This is a release candidate audit assessment, not a final production readiness claim. It records implementation-backed acceptance status, known limitations, and next release backlog items.
 
@@ -26,6 +26,7 @@ Included capabilities:
 - RBAC hardening for approvals and incident transitions
 - End-to-end operational flow acceptance coverage
 - Release notes and validation runbook for the v0.2.0 release candidate
+- Local Docker Compose packaging for PostgreSQL, API, and web services
 
 Excluded capabilities:
 
@@ -35,6 +36,7 @@ Excluded capabilities:
 - Email sending
 - Broad semiconductor equipment domains beyond Load Port / FOUP Clamp / EtherCAT I/O
 - Final production deployment certification
+- Real factory connector deployment
 
 ## 3. Acceptance Criteria
 
@@ -52,6 +54,7 @@ Excluded capabilities:
 | Frontend degraded data state is explicit | Accepted / Needs browser coverage | PR-26 API helper and page handling |
 | Backend operational flow connects records end to end | Accepted / Needs browser coverage | PR-29 acceptance test links telemetry, incident, diagnosis, checklist, report, approval, and audit trail |
 | Release-candidate packaging docs exist | Accepted / Needs current PR validation | PR-30 release notes, validation runbook, README links, and static packaging checks |
+| Local containerized execution packaging exists | Accepted / Needs runtime smoke when environment allows | PR-31 Compose stack, API/web Dockerfiles, env example, deployment documentation, and static deployment checks |
 
 ## 4. Implemented Capability Map
 
@@ -72,6 +75,7 @@ Excluded capabilities:
 | Reliability Baseline | Implemented / Needs hardening | request middleware, readiness endpoint | app middleware and schema indexes |
 | Operational Flow Acceptance | Implemented / Needs hardening | backend acceptance test | telemetry, incident, diagnosis, checklist, report, approval, audit records |
 | Release-Candidate Packaging | Implemented / Needs current PR validation | release notes and validation runbook | docs and static packaging tests |
+| Deployment / Containerization | Implemented / Needs runtime smoke | Docker Compose, API Dockerfile, web Dockerfile | local env example, migration command, health/readiness checks |
 
 ## 5. Route Coverage
 
@@ -143,6 +147,7 @@ Backend tests cover:
 - PR-28 static acceptance checks
 - PR-29 end-to-end operational flow acceptance
 - PR-30 release-candidate packaging checks
+- PR-31 deployment/containerization static checks
 
 Frontend validation covers:
 
@@ -197,13 +202,12 @@ PR-29 completed backend/TestClient operational flow acceptance for this path. Br
 - Incident timeline visualization is not yet a dedicated module.
 - Field notes are checklist-item scoped; incident-level note aggregation remains future work.
 - Read-only real equipment connector specification is not complete.
-- Deployment/container packaging is not yet acceptance-tested.
+- Local deployment/container packaging is documented and statically checked; full runtime smoke depends on Docker availability.
 - Observability is limited to request IDs, readiness, logging guardrails, and audit records; metrics and alerting remain future work.
 - Migration replay is covered by conventional migrations and tests but not yet by a dedicated CI migration replay job.
 
 ## 13. Next Release Backlog
 
-- Deployment/containerization
 - Observability / incident timeline hardening
 - Read-only real equipment connector specification
 - Offline factory network execution mode
@@ -213,15 +217,16 @@ PR-29 completed backend/TestClient operational flow acceptance for this path. Br
 ## 14. Release Decision Status
 
 Decision:
-Conditionally acceptable as an operational acceptance baseline for the current release-candidate scope after PR-30 validation completes.
+Conditionally acceptable as an operational acceptance baseline for the current release-candidate scope after PR-31 validation completes.
 
 Conditions:
 
-- PR-30 targeted packaging checks must pass.
+- PR-31 targeted deployment packaging checks must pass.
 - Full backend pytest must pass.
 - Frontend typecheck/build must pass.
 - `git diff --check` must pass.
 - Product language scan must have no matches.
 - Safety phrase scan must have no user-facing docs/UI matches.
+- `docker compose config` should pass when Docker Compose is available.
 - Static acceptance checks must pass.
 - Known limitations must remain documented and must not be represented as final production readiness.

@@ -24,6 +24,7 @@ Release-candidate references:
 - `docs/24_release_candidate_validation_runbook.md`
 - `docs/21_release_candidate_acceptance_audit.md`
 - `docs/22_end_to_end_operational_flow_acceptance.md`
+- `docs/25_deployment_containerization.md`
 
 ## Safety Boundaries
 
@@ -84,6 +85,18 @@ Repository:
 git diff --check
 ```
 
+## Local Containerized Execution
+
+PR-31 adds a local Docker Compose stack for the v0.2.0 release-candidate baseline. It is intended for repeatable local service execution, not final deployment certification.
+
+```bash
+cp .env.example .env
+docker compose build
+docker compose up
+```
+
+See `docs/25_deployment_containerization.md` for service layout, environment variables, migration guidance, validation commands, cleanup, and known limitations.
+
 ## Current Implemented Modules
 
 - Authentication/RBAC foundation and current-user role visibility
@@ -99,10 +112,11 @@ git diff --check
 - Read-only equipment telemetry ingestion for alarm events, I/O snapshots, and EtherCAT status snapshots
 - Request correlation ID middleware and readiness endpoint
 - Frontend API contract handling with explicit degraded data state
+- Local containerized execution packaging for PostgreSQL, API, and web services
 
 ## Release Direction
 
-PR-30 packages the v0.2.0 release candidate baseline with release notes, repeatable validation guidance, roadmap updates, release-candidate acceptance updates, and lightweight static checks. Next release work should focus on deployment/containerization, observability and incident timeline hardening, read-only connector specification, offline factory network execution mode, browser full operational flow acceptance, and migration replay CI.
+PR-31 packages local deployment/containerization for the v0.2.0 release candidate baseline with Docker Compose, API/web Dockerfiles, environment examples, deployment documentation, and static deployment checks. Next release work should focus on observability and incident timeline hardening, read-only connector specification, offline factory network execution mode, browser full operational flow acceptance, and migration replay CI.
 
 See:
 
@@ -115,3 +129,4 @@ See:
 - `docs/22_end_to_end_operational_flow_acceptance.md`
 - `docs/23_release_notes_v0_2_0.md`
 - `docs/24_release_candidate_validation_runbook.md`
+- `docs/25_deployment_containerization.md`
