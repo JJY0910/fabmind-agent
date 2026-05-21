@@ -2,7 +2,7 @@
 
 ## 1. Audit Purpose
 
-This document records the PR-28 system acceptance audit for FabMind Agent after PR-20 through PR-27. It establishes an operational acceptance baseline for the current implementation-backed scope.
+This document records the release-candidate acceptance audit for FabMind Agent after PR-20 through PR-29, with PR-30 used to package the v0.2.0 release-candidate baseline. It establishes an operational acceptance baseline for the current implementation-backed scope.
 
 This is a release candidate audit assessment, not a final production readiness claim. It records implementation-backed acceptance status, known limitations, and next release backlog items.
 
@@ -25,6 +25,7 @@ Included capabilities:
 - Frontend API contract handling and degraded state visibility
 - RBAC hardening for approvals and incident transitions
 - End-to-end operational flow acceptance coverage
+- Release notes and validation runbook for the v0.2.0 release candidate
 
 Excluded capabilities:
 
@@ -50,6 +51,7 @@ Excluded capabilities:
 | Pagination/reliability hardening exists | Accepted / Needs load validation | PR-25 pagination, index, request ID, and readiness tests |
 | Frontend degraded data state is explicit | Accepted / Needs browser coverage | PR-26 API helper and page handling |
 | Backend operational flow connects records end to end | Accepted / Needs browser coverage | PR-29 acceptance test links telemetry, incident, diagnosis, checklist, report, approval, and audit trail |
+| Release-candidate packaging docs exist | Accepted / Needs current PR validation | PR-30 release notes, validation runbook, README links, and static packaging checks |
 
 ## 4. Implemented Capability Map
 
@@ -69,6 +71,7 @@ Excluded capabilities:
 | RBAC Enforcement | Implemented / Needs hardening | auth/me, approval, incident APIs | users, roles, audit_events |
 | Reliability Baseline | Implemented / Needs hardening | request middleware, readiness endpoint | app middleware and schema indexes |
 | Operational Flow Acceptance | Implemented / Needs hardening | backend acceptance test | telemetry, incident, diagnosis, checklist, report, approval, audit records |
+| Release-Candidate Packaging | Implemented / Needs current PR validation | release notes and validation runbook | docs and static packaging tests |
 
 ## 5. Route Coverage
 
@@ -139,6 +142,7 @@ Backend tests cover:
 - RBAC approval hardening
 - PR-28 static acceptance checks
 - PR-29 end-to-end operational flow acceptance
+- PR-30 release-candidate packaging checks
 
 Frontend validation covers:
 
@@ -184,6 +188,8 @@ Current workflow:
 7. Senior/admin approval or rejection records the final decision.
 8. Audit events preserve sensitive workflow activity and denials.
 
+PR-29 completed backend/TestClient operational flow acceptance for this path. Browser full-flow acceptance remains future work and is not claimed by this audit.
+
 ## 12. Known Limitations
 
 - Browser E2E validation depends on GitHub Actions because local WSL browser execution is constrained in this environment.
@@ -197,19 +203,24 @@ Current workflow:
 
 ## 13. Next Release Backlog
 
-- Release Candidate v0.2.0 Packaging / Release Notes
+- Deployment/containerization
 - Observability / incident timeline hardening
 - Read-only real equipment connector specification
 - Offline factory network execution mode
+- Browser full operational flow acceptance
+- Migration replay CI
 
 ## 14. Release Decision Status
 
 Decision:
-Conditionally acceptable as an operational acceptance baseline for the current release-candidate scope.
+Conditionally acceptable as an operational acceptance baseline for the current release-candidate scope after PR-30 validation completes.
 
 Conditions:
 
-- All PR-28 validation commands must pass.
+- PR-30 targeted packaging checks must pass.
+- Full backend pytest must pass.
+- Frontend typecheck/build must pass.
+- `git diff --check` must pass.
 - Product language scan must have no matches.
 - Safety phrase scan must have no user-facing docs/UI matches.
 - Static acceptance checks must pass.
