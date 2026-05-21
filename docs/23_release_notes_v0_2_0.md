@@ -42,6 +42,7 @@ Out of scope:
 - Sidebar operational views for dashboard, equipment, incidents, checklists, approvals, audit events, and settings.
 - Navigation, contract, and reliability hardening across backend and frontend surfaces.
 - Backend/TestClient end-to-end operational flow acceptance covering telemetry, incident, diagnosis, checklist, report, approval, and audit records.
+- Local containerized execution packaging for PostgreSQL, API, and web services.
 
 ## Safety Boundaries
 
@@ -56,13 +57,15 @@ Out of scope:
 
 ## Validation Summary
 
-Current PR-30 validation baseline:
+Current release-candidate validation baseline:
 
 - Backend targeted release packaging pytest: 8 passed.
-- Backend full pytest count: 136 passed.
+- Backend full pytest count after PR-31 deployment static checks: 143 passed.
 - Frontend typecheck: `npm run typecheck`.
 - Frontend production build: `npm run build`.
 - Repository whitespace check: `git diff --check`.
+- PR-31 targeted deployment packaging pytest: `tests/test_pr31_deployment_containerization.py`.
+- `docker compose config` requires Docker availability in the local WSL environment.
 - GitHub Actions Playwright is the browser validation source of truth for navigation and workflow smoke coverage.
 
 ## Known Limitations
@@ -70,14 +73,13 @@ Current PR-30 validation baseline:
 - Not connected to real fab equipment yet.
 - Read-only adapter is ready, but the real connector specification remains future work.
 - Browser full-flow acceptance remains future work.
-- Deployment/containerization remains future work.
+- Local deployment/containerization is packaged, but final deployment certification and runtime environment qualification remain future work.
 - Observability and incident timeline hardening remain future work.
 - Migration replay CI remains future work.
 - This release candidate is an operational acceptance baseline, not a final deployment certification.
 
 ## Next Release Backlog
 
-- Deployment/containerization.
 - Observability / incident timeline hardening.
 - Read-only real equipment connector specification.
 - Offline factory network execution mode.

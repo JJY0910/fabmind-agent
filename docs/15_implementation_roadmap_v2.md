@@ -179,8 +179,6 @@ Acceptance result:
 
 Backend/TestClient operational flow acceptance connects telemetry, incident, diagnosis, checklist, report, approval, and audit records while preserving the read-only equipment boundary.
 
-## Current PR
-
 ### PR-30 Release Candidate v0.2.0 Packaging / Release Notes - Current
 
 Purpose:
@@ -205,20 +203,41 @@ Exit criteria:
 - Safety phrase scan has no user-facing docs/UI matches.
 - Release notes document known limitations without a final deployment certification claim.
 
-## Next Release Backlog
+Acceptance result:
 
-### Deployment / Containerization
+Release-candidate packaging, release notes, validation runbook, README links, roadmap/audit updates, and static packaging checks were completed without runtime behavior changes.
+
+## Current PR
+
+### PR-31 Deployment / Containerization - Current
 
 Purpose:
-Create repeatable deployment packaging and operational startup guidance.
+Add local deployment/containerization support for the v0.2.0 release-candidate baseline without changing product workflow behavior.
 
 Expected scope:
 
-- API container build
-- web container build
-- database migration execution path
-- environment variable documentation
-- health/readiness probe wiring
+- Add root `docker-compose.yml` for PostgreSQL, API, and web services
+- Add backend API Dockerfile
+- Add frontend web Dockerfile
+- Add non-secret root `.env.example`
+- Add Docker ignore files for generated artifacts and local env files
+- Add `docs/25_deployment_containerization.md`
+- Refresh README, roadmap, release-candidate audit, and release notes
+- Add lightweight static deployment packaging checks
+- Preserve runtime behavior, API contract, database schema, and frontend UI behavior
+
+Exit criteria:
+
+- PR-31 targeted deployment packaging test passes.
+- Full backend pytest passes.
+- Frontend typecheck/build pass.
+- `git diff --check` passes.
+- Product language scan has no matches.
+- Safety phrase scan has no user-facing docs/UI matches.
+- `docker compose config` passes when Docker Compose is available.
+- Documentation keeps local containerized execution distinct from final deployment certification.
+
+## Next Release Backlog
 
 ### Observability / Incident Timeline Hardening
 
