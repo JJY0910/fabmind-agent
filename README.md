@@ -25,6 +25,7 @@ Release-candidate references:
 - `docs/21_release_candidate_acceptance_audit.md`
 - `docs/22_end_to_end_operational_flow_acceptance.md`
 - `docs/25_deployment_containerization.md`
+- `docs/26_web_api_auth_connection_baseline.md`
 
 ## Safety Boundaries
 
@@ -130,3 +131,4 @@ See:
 - `docs/23_release_notes_v0_2_0.md`
 - `docs/24_release_candidate_validation_runbook.md`
 - `docs/25_deployment_containerization.md`
+- `docs/26_web_api_auth_connection_baseline.md`
