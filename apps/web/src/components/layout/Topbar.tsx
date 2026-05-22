@@ -1,12 +1,19 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { Search, Bell, ShieldCheck } from "lucide-react";
+import { getCurrentNavItem } from "./navigation";
 
 export function Topbar() {
+  const pathname = usePathname();
+  const currentPage = getCurrentNavItem(pathname).topbarLabel;
+
   return (
     <header className="h-16 bg-[#0a1322]/80 backdrop-blur-md border-b border-[#1a2c4d] flex items-center justify-between px-6 sticky top-0 z-10">
       <div className="flex items-center gap-3 text-sm text-slate-400">
         <span className="px-2.5 py-1 rounded bg-[#111d33] text-xs font-mono border border-[#1a2c4d] text-[#00e5ff]">SYS-OP</span>
         <span className="text-slate-600">/</span>
-        <span className="text-white font-medium">Dashboard</span>
+        <span className="text-white font-medium">{currentPage}</span>
       </div>
       
       <div className="flex items-center gap-6">
