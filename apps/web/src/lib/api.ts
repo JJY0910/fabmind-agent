@@ -1,4 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const ACCESS_TOKEN_STORAGE_KEY = "fabmind_access_token";
 
 export type ListSource = "api" | "fallback";
 export type ApiFailureKind = "unauthorized" | "forbidden" | "network" | "http" | "invalid-json";
@@ -44,6 +45,12 @@ export type AuthUser = {
   display_name?: string | null;
   role: "FIELD_ENGINEER" | "SENIOR_ENGINEER" | "ADMIN" | string;
   tenant_id: string;
+};
+
+export type LoginResponse = {
+  access_token: string;
+  token_type?: string;
+  user: AuthUser;
 };
 
 type NormalizeListOptions = {
@@ -105,6 +112,21 @@ function normalizeAuthUser(payload: unknown): AuthUser {
     display_name: typeof user.display_name === "string" ? user.display_name : null,
     role: user.role,
     tenant_id: user.tenant_id,
+  };
+}
+
+function normalizeLoginResponse(payload: unknown): LoginResponse {
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Malformed login response from API");
+  }
+  const response = payload as Record<string, unknown>;
+  if (typeof response.access_token !== "string") {
+    throw new Error("Malformed login response from API");
+  }
+  return {
+    access_token: response.access_token,
+    token_type: typeof response.token_type === "string" ? response.token_type : undefined,
+    user: normalizeAuthUser(response.user),
   };
 }
 
@@ -171,15 +193,45 @@ function getHeaders(): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
-  
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('fabmind_access_token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+
+  const token = getStoredAccessToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
   
   return headers;
+}
+
+export function getStoredAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export function setStoredAccessToken(token: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+}
+
+export function clearStoredAccessToken(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+}
+
+export async function signIn(payload: { username: string; password: string }): Promise<AuthUser> {
+  const res = await fetchApi("/api/v1/auth/login", "Sign in", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  const login = normalizeLoginResponse(await parseJsonResponse(res, "Sign in"));
+  setStoredAccessToken(login.access_token);
+  return login.user;
+}
+
+export function signOut(): void {
+  clearStoredAccessToken();
 }
 
 export async function fetchDashboardSummary() {
