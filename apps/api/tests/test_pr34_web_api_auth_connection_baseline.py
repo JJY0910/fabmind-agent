@@ -26,7 +26,9 @@ def test_frontend_api_client_keeps_existing_token_boundary():
     text = API_HELPER.read_text(encoding="utf-8")
 
     assert "fabmind_access_token" in text
-    assert "localStorage.getItem('fabmind_access_token')" in text
+    assert "ACCESS_TOKEN_STORAGE_KEY" in text
+    assert "getStoredAccessToken" in text
+    assert "localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)" in text
     assert "Bearer ${token}" in text
     assert "NEXT_PUBLIC_AUTH_TOKEN" not in text
     assert "NEXT_PUBLIC_BEARER_TOKEN" not in text
