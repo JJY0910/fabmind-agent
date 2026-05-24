@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CodePill, DataSourceBanner, OperationalTable, OperationalTableBody, OperationalTableHeader, StatusBadge, TableStateRow } from "@/components/ui/operational";
 import { createReferenceListResponse, fetchEquipmentList } from "@/lib/api";
-import { Activity, Database, AlertTriangle, ShieldCheck, ChevronRight, Server } from "lucide-react";
+import { Activity, Database, AlertTriangle, ShieldCheck, Server } from "lucide-react";
 import Link from "next/link";
 
 const fallbackEquipment = [
@@ -64,24 +65,21 @@ export default function EquipmentPage() {
         </p>
       </div>
 
-      {error && (
-        <div className="bg-[#ffaa00]/10 border border-[#ffaa00]/30 text-[#ffaa00] p-3 rounded-md text-sm mb-4">
-          {error}
-          <span className="block text-xs text-[#ffaa00]/80 mt-1">Operational API connection required for live records.</span>
-        </div>
-      )}
+      {error ? (
+        <DataSourceBanner
+          mode="reference"
+          message={error}
+          detail="Operational API connection required for live records."
+        />
+      ) : null}
 
-      {dataMode === "live" && (
-        <div className="bg-[#00cc66]/10 border border-[#00cc66]/30 text-[#00cc66] p-3 rounded-md text-sm mb-4">
-          Backend API connected. Showing live read-only equipment records.
-        </div>
-      )}
+      {dataMode === "live" ? (
+        <DataSourceBanner mode="live" message="Backend API connected. Showing live read-only equipment records." />
+      ) : null}
 
-      {dataMode === "empty" && (
-        <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
-          Backend API connected. No equipment records matched the current query.
-        </div>
-      )}
+      {dataMode === "empty" ? (
+        <DataSourceBanner mode="empty" message="Backend API connected. No equipment records matched the current query." />
+      ) : null}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -114,11 +112,8 @@ export default function EquipmentPage() {
         </Card>
       </div>
 
-      {/* Equipment Table */}
-      <Card className="border-[#1a2c4d] overflow-hidden bg-[#0a1322]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-[#111d33] border-b border-[#1a2c4d] text-xs uppercase text-slate-400">
+      <OperationalTable>
+            <OperationalTableHeader>
               <tr>
                 <th className="px-4 py-3 font-medium">Equipment</th>
                 <th className="px-4 py-3 font-medium">Type / Subsystem</th>
@@ -127,16 +122,12 @@ export default function EquipmentPage() {
                 <th className="px-4 py-3 font-medium">Last Seen</th>
                 <th className="px-4 py-3 font-medium text-right">Action</th>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1a2c4d]">
+            </OperationalTableHeader>
+            <OperationalTableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading equipment registry...</td>
-                </tr>
+                <TableStateRow colSpan={6} title="Loading equipment registry..." detail="Checking authenticated read-only API access." />
               ) : equipmentList.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">No equipment found in registry.</td>
-                </tr>
+                <TableStateRow colSpan={6} title="No equipment found in registry." detail="The live API returned an empty equipment list for this tenant." />
               ) : (
                 equipmentList.map((eq, index) => {
                   const equipmentKey = eq.id ?? eq.equipment_id ?? eq.equipment_code ?? `equipment-${index}`;
@@ -144,7 +135,7 @@ export default function EquipmentPage() {
                   return (
                   <tr key={equipmentKey} className="hover:bg-[#111d33]/50 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-mono text-[#00e5ff] font-medium">{eq.equipment_code}</div>
+                      <CodePill>{eq.equipment_code}</CodePill>
                       <div className="text-xs text-slate-500">{eq.equipment_name}</div>
                     </td>
                     <td className="px-4 py-3">
@@ -152,17 +143,11 @@ export default function EquipmentPage() {
                       <div className="text-xs text-slate-500">{eq.subsystem}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border ${
-                        eq.operational_status === 'ALARM' ? 'bg-[#ff3366]/10 text-[#ff3366] border-[#ff3366]/30' :
-                        eq.operational_status === 'WARNING' ? 'bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/30' :
-                        'bg-[#00cc66]/10 text-[#00cc66] border-[#00cc66]/30'
-                      }`}>
-                        {eq.operational_status}
-                      </span>
+                      <StatusBadge status={eq.operational_status} />
                     </td>
                     <td className="px-4 py-3 font-mono text-xs">
                       {eq.current_alarm_code ? (
-                        <span className="text-[#ff3366]">{eq.current_alarm_code}</span>
+                        <CodePill tone="red">{eq.current_alarm_code}</CodePill>
                       ) : (
                         <span className="text-slate-600">-</span>
                       )}
@@ -183,10 +168,8 @@ export default function EquipmentPage() {
                   </tr>
                 )})
               )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+            </OperationalTableBody>
+      </OperationalTable>
     </div>
   );
 }
