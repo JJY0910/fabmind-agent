@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { CodePill, DataSourceBanner, OperationalTable, OperationalTableBody, OperationalTableHeader, SeverityBadge, StatusBadge, TableStateRow } from "@/components/ui/operational";
 import { createReferenceListResponse, fetchIncidentList } from "@/lib/api";
-import { ShieldAlert, AlertTriangle, ChevronRight, CheckSquare, FileText, Clock } from "lucide-react";
+import { ShieldAlert, AlertTriangle, CheckSquare, FileText, Clock } from "lucide-react";
 import Link from "next/link";
 
 const fallbackIncidents = [
@@ -70,24 +71,21 @@ export default function ActiveIncidentsPage() {
         </p>
       </div>
 
-      {error && (
-        <div className="bg-[#ffaa00]/10 border border-[#ffaa00]/30 text-[#ffaa00] p-3 rounded-md text-sm mb-4">
-          {error}
-          <span className="block text-xs text-[#ffaa00]/80 mt-1">Operational API connection required for live incident records.</span>
-        </div>
-      )}
+      {error ? (
+        <DataSourceBanner
+          mode="reference"
+          message={error}
+          detail="Operational API connection required for live incident records."
+        />
+      ) : null}
 
-      {dataMode === "live" && (
-        <div className="bg-[#00cc66]/10 border border-[#00cc66]/30 text-[#00cc66] p-3 rounded-md text-sm mb-4">
-          Backend API connected. Showing {apiTotal} tenant-scoped incident record{apiTotal === 1 ? "" : "s"}.
-        </div>
-      )}
+      {dataMode === "live" ? (
+        <DataSourceBanner mode="live" message={`Backend API connected. Showing ${apiTotal} tenant-scoped incident record${apiTotal === 1 ? "" : "s"}.`} />
+      ) : null}
 
-      {dataMode === "empty" && (
-        <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
-          Backend API connected. No active incidents matched the current query.
-        </div>
-      )}
+      {dataMode === "empty" ? (
+        <DataSourceBanner mode="empty" message="Backend API connected. No active incidents matched the current query." />
+      ) : null}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -111,11 +109,8 @@ export default function ActiveIncidentsPage() {
         </Card>
       </div>
 
-      {/* Incidents Table */}
-      <Card className="border-[#1a2c4d] overflow-hidden bg-[#0a1322]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-[#111d33] border-b border-[#1a2c4d] text-xs uppercase text-slate-400">
+      <OperationalTable>
+            <OperationalTableHeader>
               <tr>
                 <th className="px-4 py-3 font-medium">Incident / Alarm</th>
                 <th className="px-4 py-3 font-medium">Equipment</th>
@@ -124,37 +119,26 @@ export default function ActiveIncidentsPage() {
                 <th className="px-4 py-3 font-medium">Opened At</th>
                 <th className="px-4 py-3 font-medium text-right">Action</th>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1a2c4d]">
+            </OperationalTableHeader>
+            <OperationalTableBody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading incidents...</td>
-                </tr>
+                <TableStateRow colSpan={6} title="Loading incidents..." detail="Checking authenticated read-only API access." />
               ) : incidents.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">No active incidents found.</td>
-                </tr>
+                <TableStateRow colSpan={6} title="No active incidents found." detail="The live API returned no open or triaged incident records." />
               ) : (
                 incidents.map((inc) => (
                   <tr key={inc.incident_id ?? inc.id} className="hover:bg-[#111d33]/50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="font-medium text-white">{inc.title}</div>
-                      <div className="font-mono text-[#ff3366] text-xs mt-0.5">{inc.alarm_code}</div>
+                      <CodePill tone="red" className="mt-1">{inc.alarm_code}</CodePill>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-mono text-[#00e5ff] text-xs bg-[#00e5ff]/10 px-2 py-0.5 rounded border border-[#00e5ff]/20">{inc.equipment_code}</span>
+                      <CodePill>{inc.equipment_code}</CodePill>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1.5 items-start">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border ${
-                          inc.status === 'CHECKLIST_IN_PROGRESS' || inc.status === 'TRIAGED' ? 'bg-[#00e5ff]/10 text-[#00e5ff] border-[#00e5ff]/30' :
-                          'bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/30'
-                        }`}>
-                          {inc.status}
-                        </span>
-                        <span className={`text-[10px] font-bold ${(inc.risk_level ?? inc.severity) === 'HIGH' ? 'text-[#ff3366]' : 'text-[#ffaa00]'}`}>
-                          {inc.risk_level ?? inc.severity ?? "UNKNOWN"} SEVERITY
-                        </span>
+                        <StatusBadge status={inc.status} />
+                        <SeverityBadge severity={inc.risk_level ?? inc.severity} />
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -179,10 +163,8 @@ export default function ActiveIncidentsPage() {
                   </tr>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+            </OperationalTableBody>
+      </OperationalTable>
     </div>
   );
 }
