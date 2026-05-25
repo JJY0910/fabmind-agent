@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChecklistRunDetailDrawer, type ChecklistRunSummary } from "@/components/ui/checklist-run-detail-drawer";
+import {
+  CodePill,
+  DataSourceBanner,
+  OperationalTable,
+  OperationalTableBody,
+  OperationalTableHeader,
+  StatusBadge,
+  TableStateRow,
+} from "@/components/ui/operational";
 import { createReferenceListResponse, fetchChecklistRunList } from "@/lib/api";
-import { CheckSquare, CheckCircle2, Clock, ShieldAlert, FileText, Activity } from "lucide-react";
+import { CheckSquare, CheckCircle2, Clock, FileText, Activity } from "lucide-react";
 import Link from "next/link";
 
-const fallbackChecklists = [
+const fallbackChecklists: ChecklistRunSummary[] = [
   { checklist_run_id: "RUN-LP-01", diagnosis_session_id: "LP-01-SESSION", equipment_code: "LP-01", checklist_name: "FOUP Clamp Sensor Misalignment Check", status: "IN_PROGRESS", total_items: 3, completed_items: 1, failed_items: 0, pending_items: 2, created_at: new Date(Date.now() - 3600000).toISOString(), updated_at: new Date(Date.now() - 1800000).toISOString() },
   { checklist_run_id: "RUN-FC-11", diagnosis_session_id: "FC-11-SESSION", equipment_code: "FC-11", checklist_name: "EtherCAT Slave Status Check", status: "COMPLETED", total_items: 5, completed_items: 5, failed_items: 0, pending_items: 0, created_at: new Date(Date.now() - 7200000).toISOString(), updated_at: new Date(Date.now() - 7000000).toISOString() },
 ];
@@ -20,7 +30,8 @@ function formatTimestamp(value?: string | null) {
 }
 
 export default function ChecklistsPage() {
-  const [checklists, setChecklists] = useState<any[]>([]);
+  const [checklists, setChecklists] = useState<ChecklistRunSummary[]>([]);
+  const [selectedChecklistRun, setSelectedChecklistRun] = useState<ChecklistRunSummary | null>(null);
   const [apiTotal, setApiTotal] = useState(0);
   const [dataMode, setDataMode] = useState<DataMode>("loading");
   const [loading, setLoading] = useState(true);
@@ -29,7 +40,7 @@ export default function ChecklistsPage() {
   useEffect(() => {
     fetchChecklistRunList()
       .then(res => {
-        setChecklists(res.items);
+        setChecklists(res.items as ChecklistRunSummary[]);
         setApiTotal(res.total);
         setDataMode(res.items.length > 0 ? "live" : "empty");
       })
@@ -65,22 +76,19 @@ export default function ChecklistsPage() {
       </div>
 
       {error && (
-        <div className="bg-[#ffaa00]/10 border border-[#ffaa00]/30 text-[#ffaa00] p-3 rounded-md text-sm mb-4">
-          {error}
-          <span className="block text-xs text-[#ffaa00]/80 mt-1">Operational API connection required for live checklist records.</span>
-        </div>
+        <DataSourceBanner
+          mode="reference"
+          message={error}
+          detail="Operational API connection required for live checklist records."
+        />
       )}
 
       {dataMode === "live" && (
-        <div className="bg-[#00cc66]/10 border border-[#00cc66]/30 text-[#00cc66] p-3 rounded-md text-sm mb-4">
-          Backend API connected. Showing {apiTotal} checklist run{apiTotal === 1 ? "" : "s"}.
-        </div>
+        <DataSourceBanner mode="live" message={`Backend API connected. Showing ${apiTotal} checklist run${apiTotal === 1 ? "" : "s"}.`} />
       )}
 
       {dataMode === "empty" && (
-        <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
-          Backend API connected. No checklist runs matched the current query.
-        </div>
+        <DataSourceBanner mode="empty" message="Backend API connected. No checklist runs matched the current query." />
       )}
 
       {/* Summary Cards */}
@@ -114,82 +122,89 @@ export default function ChecklistsPage() {
         </Card>
       </div>
 
-      {/* Table */}
-      <Card className="border-[#1a2c4d] overflow-hidden bg-[#0a1322]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-[#111d33] border-b border-[#1a2c4d] text-xs uppercase text-slate-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">Checklist Run</th>
-                <th className="px-4 py-3 font-medium">Equipment / Session</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Progress</th>
-                <th className="px-4 py-3 font-medium">Last Updated</th>
-                <th className="px-4 py-3 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1a2c4d]">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading checklists...</td>
-                </tr>
-              ) : checklists.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">No checklists found.</td>
-                </tr>
-              ) : (
-                checklists.map((chk) => {
-                  const runId = chk.checklist_run_id ?? chk.id;
-                  const totalItems = Number(chk.total_items ?? 0);
-                  const completedItems = Number(chk.completed_items ?? 0);
-                  const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
-                  return (
-                  <tr key={runId ?? `${chk.equipment_code ?? "unknown"}-${chk.diagnosis_session_id ?? "session"}`} className="hover:bg-[#111d33]/50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-white">{chk.checklist_name}</div>
-                      <div className="font-mono text-[#00e5ff] text-xs mt-0.5">{runId}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-mono text-[#00e5ff] text-xs bg-[#00e5ff]/10 w-fit px-2 py-0.5 rounded border border-[#00e5ff]/20 mb-1">{chk.equipment_code}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">{chk.diagnosis_session_id}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border ${
-                        chk.status === 'IN_PROGRESS' ? 'bg-[#00e5ff]/10 text-[#00e5ff] border-[#00e5ff]/30' :
-                        chk.status === 'COMPLETED' ? 'bg-[#00cc66]/10 text-[#00cc66] border-[#00cc66]/30' :
-                        'bg-slate-800 text-slate-400 border-slate-700'
-                      }`}>
-                        {chk.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-full bg-[#111d33] rounded-full h-1.5 flex-1 min-w-[60px] overflow-hidden">
-                          <div className="bg-[#00cc66] h-1.5" style={{ width: `${progress}%` }}></div>
-                        </div>
-                        <span className="text-xs text-slate-400">{completedItems}/{totalItems}</span>
+      <OperationalTable>
+        <OperationalTableHeader>
+          <tr>
+            <th className="px-4 py-3 font-medium">Checklist Run</th>
+            <th className="px-4 py-3 font-medium">Equipment / Session</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+            <th className="px-4 py-3 font-medium">Progress</th>
+            <th className="px-4 py-3 font-medium">Last Updated</th>
+            <th className="px-4 py-3 font-medium text-right">Action</th>
+          </tr>
+        </OperationalTableHeader>
+        <OperationalTableBody>
+          {loading ? (
+            <TableStateRow colSpan={6} title="Loading checklist runs..." detail="Reading checklist run records from the operational API." />
+          ) : checklists.length === 0 ? (
+            <TableStateRow colSpan={6} title="No checklist runs found." detail="No checklist run records are available in the current payload." />
+          ) : (
+            checklists.map((chk) => {
+              const runId = chk.checklist_run_id ?? chk.id;
+              const totalItems = Number(chk.total_items ?? 0);
+              const completedItems = Number(chk.completed_items ?? 0);
+              const failedItems = Number(chk.failed_items ?? 0);
+              const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+              return (
+                <tr key={runId ?? `${chk.equipment_code ?? "unknown"}-${chk.diagnosis_session_id ?? "session"}`} className="transition-colors hover:bg-[#111d33]/50">
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-white">{chk.checklist_name ?? "Unnamed checklist run"}</div>
+                    <div className="mt-1">
+                      <CodePill>{runId ?? "UNKNOWN"}</CodePill>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <CodePill>{chk.equipment_code ?? "UNKNOWN"}</CodePill>
+                    <div className="mt-1 font-mono text-[10px] text-slate-500">{chk.diagnosis_session_id ?? "No session in payload"}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={chk.status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 min-w-[64px] flex-1 overflow-hidden rounded-full bg-[#111d33]">
+                        <div className="h-1.5 rounded-full bg-[#00cc66]" style={{ width: `${progress}%` }} />
                       </div>
-                      {chk.failed_items > 0 && <span className="text-[10px] text-[#ff3366] block mt-1">{chk.failed_items} BLOCKED</span>}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatTimestamp(chk.updated_at)}</div>
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                      <span className="text-xs text-slate-400">{completedItems}/{totalItems}</span>
+                    </div>
+                    {failedItems > 0 && <span className="mt-1 block text-[10px] text-[#ff3366]">{failedItems} blocked</span>}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-500">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {formatTimestamp(chk.updated_at)}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        className="inline-flex items-center rounded border border-[#00e5ff]/30 bg-[#00e5ff]/10 px-3 py-1.5 text-xs font-medium text-[#00e5ff] transition-colors hover:bg-[#00e5ff]/15 focus:outline-none focus:ring-2 focus:ring-[#00e5ff]/40"
+                        onClick={() => setSelectedChecklistRun(chk)}
+                      >
+                        Inspect
+                      </button>
                       {runId ? (
-                        <Link href={`/checklist-runs/${runId}`} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#111d33] hover:bg-[#1a2c4d] border border-[#1a2c4d] text-white rounded text-xs font-medium transition-colors">
+                        <Link href={`/checklist-runs/${runId}`} className="inline-flex items-center gap-1 rounded border border-[#1a2c4d] bg-[#111d33] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1a2c4d]">
                           Open Runner
                         </Link>
                       ) : (
                         <span className="text-xs text-slate-600">Run ID unavailable</span>
                       )}
-                    </td>
-                  </tr>
-                )})
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </OperationalTableBody>
+      </OperationalTable>
+
+      <ChecklistRunDetailDrawer
+        checklistRun={selectedChecklistRun}
+        dataMode={dataMode}
+        onClose={() => setSelectedChecklistRun(null)}
+      />
     </div>
   );
 }
