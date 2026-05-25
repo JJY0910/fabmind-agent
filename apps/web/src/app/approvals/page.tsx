@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { ApprovalDetailDrawer, type ApprovalQueueItemSummary } from "@/components/ui/approval-detail-drawer";
+import {
+  CodePill,
+  DataSourceBanner,
+  OperationalTable,
+  OperationalTableBody,
+  OperationalTableHeader,
+  StatusBadge,
+  TableStateRow,
+} from "@/components/ui/operational";
 import { createReferenceListResponse, fetchApprovalQueue, fetchCurrentUser, type AuthUser } from "@/lib/api";
 import { FileText, CheckCircle2, Clock, User } from "lucide-react";
 import Link from "next/link";
 
-const fallbackApprovals = [
+const fallbackApprovals: ApprovalQueueItemSummary[] = [
   { approval_id: "APP-001", report_draft_id: "RPT-LP-01", diagnosis_session_id: "LP-01-SESSION", equipment_code: "LP-01", approval_status: "PENDING_REVIEW", requested_by: "Engineer Kim", requested_at: new Date(Date.now() - 3600000).toISOString(), reviewed_at: null, reviewer_id: null },
   { approval_id: "APP-002", report_draft_id: "RPT-FC-11", diagnosis_session_id: "FC-11-SESSION", equipment_code: "FC-11", approval_status: "APPROVED", requested_by: "Engineer Park", requested_at: new Date(Date.now() - 7200000).toISOString(), reviewed_at: new Date(Date.now() - 3600000).toISOString(), reviewer_id: "Senior Eng Lee" },
 ];
@@ -15,6 +25,10 @@ type DataMode = "loading" | "live" | "reference" | "empty";
 
 function hasApprovalAuthority(user: AuthUser | null) {
   return user?.role === "SENIOR_ENGINEER" || user?.role === "ADMIN";
+}
+
+function formatUserSession(user: AuthUser) {
+  return `${user.username} (${user.role.replaceAll("_", " ")})`;
 }
 
 function formatDate(value?: string | null) {
@@ -30,7 +44,8 @@ function formatTime(value?: string | null) {
 }
 
 export default function ApprovalsPage() {
-  const [approvals, setApprovals] = useState<any[]>([]);
+  const [approvals, setApprovals] = useState<ApprovalQueueItemSummary[]>([]);
+  const [selectedApproval, setSelectedApproval] = useState<ApprovalQueueItemSummary | null>(null);
   const [apiTotal, setApiTotal] = useState(0);
   const [dataMode, setDataMode] = useState<DataMode>("loading");
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -54,7 +69,7 @@ export default function ApprovalsPage() {
   useEffect(() => {
     fetchApprovalQueue()
       .then(res => {
-        setApprovals(res.items);
+        setApprovals(res.items as ApprovalQueueItemSummary[]);
         setApiTotal(res.total);
         setDataMode(res.items.length > 0 ? "live" : "empty");
       })
@@ -89,30 +104,27 @@ export default function ApprovalsPage() {
       </div>
 
       {error && (
-        <div className="bg-[#ffaa00]/10 border border-[#ffaa00]/30 text-[#ffaa00] p-3 rounded-md text-sm mb-4">
-          {error}
-          <span className="block text-xs text-[#ffaa00]/80 mt-1">Operational API connection required for live approval queue records.</span>
-        </div>
+        <DataSourceBanner
+          mode="reference"
+          message={error}
+          detail="Operational API connection required for live approval queue records."
+        />
       )}
 
       {dataMode === "live" && (
-        <div className="bg-[#00cc66]/10 border border-[#00cc66]/30 text-[#00cc66] p-3 rounded-md text-sm mb-4">
-          Backend API connected. Showing {apiTotal} approval queue item{apiTotal === 1 ? "" : "s"}.
-        </div>
+        <DataSourceBanner mode="live" message={`Backend API connected. Showing ${apiTotal} approval queue item${apiTotal === 1 ? "" : "s"}.`} />
       )}
 
       {dataMode === "empty" && (
-        <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
-          Backend API connected. No reports are waiting for approval.
-        </div>
+        <DataSourceBanner mode="empty" message="Backend API connected. No reports are waiting for approval." />
       )}
 
       <div className="bg-[#111d33] border border-[#1a2c4d] text-slate-300 p-3 rounded-md text-sm mb-4">
         {currentUser ? (
           hasApprovalAuthority(currentUser) ? (
-            <span>Signed in as {currentUser.display_name ?? currentUser.username}. Senior/admin approval actions are available on report detail pages.</span>
+            <span>Signed in as {formatUserSession(currentUser)}. Senior/admin approval actions are available on report detail pages.</span>
           ) : (
-            <span>Signed in as {currentUser.display_name ?? currentUser.username}. Approval queue is read-only for field users; senior/admin role is required for final decisions.</span>
+            <span>Signed in as {formatUserSession(currentUser)}. Approval queue is read-only for field users; senior/admin role is required for final decisions.</span>
           )
         ) : (
           <span>{permissionError ?? "Approval permissions unavailable."}</span>
@@ -141,77 +153,82 @@ export default function ApprovalsPage() {
         </Card>
       </div>
 
-      {/* Table */}
-      <Card className="border-[#1a2c4d] overflow-hidden bg-[#0a1322]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-[#111d33] border-b border-[#1a2c4d] text-xs uppercase text-slate-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">Report Draft</th>
-                <th className="px-4 py-3 font-medium">Equipment</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Requester</th>
-                <th className="px-4 py-3 font-medium">Requested At</th>
-                <th className="px-4 py-3 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#1a2c4d]">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">Loading approval queue...</td>
-                </tr>
-              ) : approvals.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">No items in approval queue.</td>
-                </tr>
-              ) : (
-                approvals.map((app) => {
-                  const status = app.approval_status ?? app.status ?? "UNKNOWN";
-                  const key = app.approval_id ?? app.report_draft_id;
-                  return (
-                  <tr key={key} className="hover:bg-[#111d33]/50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-mono text-[#00e5ff] font-medium">{app.report_draft_id}</div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">{app.diagnosis_session_id ?? "Diagnosis session linked in report detail"}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-[#00e5ff] text-xs bg-[#00e5ff]/10 w-fit px-2 py-0.5 rounded border border-[#00e5ff]/20">{app.equipment_code ?? "See report"}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase border ${
-                        status === 'PENDING_REVIEW' || status === 'SUBMITTED' ? 'bg-[#ffaa00]/10 text-[#ffaa00] border-[#ffaa00]/30' :
-                        status === 'APPROVED' ? 'bg-[#00cc66]/10 text-[#00cc66] border-[#00cc66]/30' :
-                        'bg-[#ff3366]/10 text-[#ff3366] border-[#ff3366]/30'
-                      }`}>
-                        {status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                        <User className="w-3.5 h-3.5 text-slate-500" />
-                        {app.requested_by}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {formatDate(app.requested_at)}</div>
-                      <div className="text-slate-600 ml-4">{formatTime(app.requested_at)}</div>
-                    </td>
-                    <td className="px-4 py-3 text-right">
+      <OperationalTable>
+        <OperationalTableHeader>
+          <tr>
+            <th className="px-4 py-3 font-medium">Report Draft</th>
+            <th className="px-4 py-3 font-medium">Equipment</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+            <th className="px-4 py-3 font-medium">Requester</th>
+            <th className="px-4 py-3 font-medium">Requested At</th>
+            <th className="px-4 py-3 font-medium text-right">Action</th>
+          </tr>
+        </OperationalTableHeader>
+        <OperationalTableBody>
+          {loading ? (
+            <TableStateRow colSpan={6} title="Loading approval queue..." detail="Checking authenticated read-only approval queue access." />
+          ) : approvals.length === 0 ? (
+            <TableStateRow colSpan={6} title="No items in approval queue." detail="No report records are waiting for review in the current payload." />
+          ) : (
+            approvals.map((app) => {
+              const status = app.approval_status ?? app.status ?? "UNKNOWN";
+              const key = app.approval_id ?? app.report_draft_id;
+              return (
+                <tr key={key ?? `${app.requested_by ?? "requester"}-${app.requested_at ?? "requested"}`} className="transition-colors hover:bg-[#111d33]/50">
+                  <td className="px-4 py-3">
+                    <CodePill tone="amber">{app.report_draft_id ?? "REPORT_UNAVAILABLE"}</CodePill>
+                    <div className="mt-1 font-mono text-[10px] text-slate-500">{app.diagnosis_session_id ?? "Diagnosis session linked in report detail"}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <CodePill>{app.equipment_code ?? "See report"}</CodePill>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={status} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-300">
+                      <User className="h-3.5 w-3.5 text-slate-500" />
+                      {app.requested_by ?? "Requester unavailable"}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-500">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {formatDate(app.requested_at)}
+                    </div>
+                    <div className="ml-4 text-slate-600">{formatTime(app.requested_at)}</div>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        className="inline-flex items-center rounded border border-[#ffaa00]/30 bg-[#ffaa00]/10 px-3 py-1.5 text-xs font-medium text-[#ffaa00] transition-colors hover:bg-[#ffaa00]/15 focus:outline-none focus:ring-2 focus:ring-[#ffaa00]/40"
+                        onClick={() => setSelectedApproval(app)}
+                      >
+                        Inspect
+                      </button>
                       {app.report_draft_id ? (
-                        <Link href={`/report-drafts/${app.report_draft_id}`} className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#ffaa00] hover:bg-[#ffaa00]/90 text-black rounded text-xs font-bold transition-colors shadow-[0_0_10px_rgba(255,170,0,0.2)]">
+                        <Link href={`/report-drafts/${app.report_draft_id}`} className="inline-flex items-center gap-1 rounded bg-[#ffaa00] px-3 py-1.5 text-xs font-bold text-black shadow-[0_0_10px_rgba(255,170,0,0.2)] transition-colors hover:bg-[#ffaa00]/90">
                           Review Draft
                         </Link>
                       ) : (
                         <span className="text-xs text-slate-600">Report link unavailable</span>
                       )}
-                    </td>
-                  </tr>
-                )})
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </OperationalTableBody>
+      </OperationalTable>
+
+      <ApprovalDetailDrawer
+        approval={selectedApproval}
+        currentUserRole={currentUser?.role}
+        dataMode={dataMode}
+        onClose={() => setSelectedApproval(null)}
+      />
     </div>
   );
 }
