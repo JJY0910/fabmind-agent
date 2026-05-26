@@ -3,6 +3,13 @@
 import { useEffect, type ReactNode } from "react";
 import { Clock, Database, FileJson, Link2, ShieldCheck, UserRound, X } from "lucide-react";
 import { CodePill, StatusBadge } from "./operational";
+import {
+  WorkflowTraceList,
+  checklistRunTraceHref,
+  diagnosisSessionTraceHref,
+  reportDraftTraceHref,
+  type WorkflowTraceReference,
+} from "./workflow-trace";
 
 export type AuditEventSummary = {
   id?: string | null;
@@ -53,6 +60,48 @@ export function AuditEventDetailDrawer({
   const resourceId = auditEvent.resource_id ?? payloadValue(payload.record, ["resource_id", "resourceId"]) ?? "Not included in current payload";
   const sourceLabel = dataMode === "live" ? "Live API data is active" : dataMode === "reference" ? "Fallback data is active" : "Current payload state";
   const policyContext = hasPolicyContext(auditEvent, payload.preview);
+  const diagnosisSessionId = payloadValue(payload.record, ["diagnosis_session_id", "diagnosisSessionId", "session_id"]) ?? resourceTraceId(resourceType, resourceId, "diagnosis_session");
+  const checklistRunId = payloadValue(payload.record, ["checklist_run_id", "checklistRunId"]) ?? resourceTraceId(resourceType, resourceId, "checklist_run");
+  const reportDraftId = payloadValue(payload.record, ["report_draft_id", "reportDraftId"]) ?? resourceTraceId(resourceType, resourceId, "report_draft");
+  const workflowTraceReferences: WorkflowTraceReference[] = [
+    {
+      label: "Diagnosis Session",
+      value: diagnosisSessionId,
+      href: diagnosisSessionTraceHref(diagnosisSessionId),
+      note: diagnosisSessionId ? "Read-only diagnosis route available" : "No linked workflow identifier is included in the current audit payload",
+    },
+    {
+      label: "Checklist Run",
+      value: checklistRunId,
+      href: checklistRunTraceHref(checklistRunId),
+      note: checklistRunId ? "Read-only checklist route available" : "No linked checklist in current audit payload",
+    },
+    {
+      label: "Report Draft",
+      value: reportDraftId,
+      href: reportDraftTraceHref(reportDraftId),
+      note: reportDraftId ? "Read-only report route available" : "No linked report in current audit payload",
+      tone: "amber",
+    },
+    {
+      label: "Agent Run",
+      value: payloadValue(payload.record, ["agent_run_id", "agentRunId", "run_id"]),
+      note: "No target-specific agent run route is currently available",
+      tone: "slate",
+    },
+    {
+      label: "Approval Record",
+      value: payloadValue(payload.record, ["approval_id", "approvalId"]),
+      note: "Approval queue is list-based in the current route set",
+      tone: "slate",
+    },
+    {
+      label: "Audit Event",
+      value: eventId,
+      note: "Current immutable audit record",
+      tone: "slate",
+    },
+  ];
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/50">
@@ -134,14 +183,7 @@ export function AuditEventDetailDrawer({
 
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">
             <SectionTitle icon={<Link2 className="h-4 w-4" />} title="Workflow Traceability" />
-            <DetailGrid
-              rows={[
-                ["Diagnosis Session", payloadValue(payload.record, ["diagnosis_session_id", "diagnosisSessionId", "session_id"]) ?? "No linked workflow identifier is included in the current audit payload"],
-                ["Agent Run", payloadValue(payload.record, ["agent_run_id", "agentRunId", "run_id"]) ?? "No linked agent run in current audit payload"],
-                ["Checklist Run", payloadValue(payload.record, ["checklist_run_id", "checklistRunId"]) ?? "No linked checklist in current audit payload"],
-                ["Report / Approval", payloadValue(payload.record, ["report_draft_id", "report_id", "approval_id"]) ?? "No linked report or approval in current audit payload"],
-              ]}
-            />
+            <WorkflowTraceList references={workflowTraceReferences} />
           </section>
 
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">
@@ -253,6 +295,13 @@ function payloadValue(record: PayloadRecord | null, keys: string[]) {
   }
 
   return null;
+}
+
+function resourceTraceId(resourceType: string, resourceId: string, expectedType: "diagnosis_session" | "checklist_run" | "report_draft") {
+  const normalizedType = resourceType.toLowerCase().replaceAll("-", "_");
+  const normalizedId = resourceId.trim();
+  if (!normalizedId || normalizedId === "Not included in current payload") return null;
+  return normalizedType.includes(expectedType) ? normalizedId : null;
 }
 
 function formatPayloadValue(value: unknown) {
