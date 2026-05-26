@@ -15,15 +15,25 @@ const mockSummary = {
   submitted_report_count: 4,
   approved_report_count: 156,
   recent_diagnosis_sessions: [
-    { session_id: 'LP-01-SESSION', equipment_code: 'LP-01', alarm_code: 'LP-CLAMP-014', status: 'ANALYSIS_READY', risk_level: 'LOW', created_at: new Date(Date.now() - 600000).toISOString(), desc: 'Clamp 완료 센서 위치 이탈' },
-    { session_id: 'LP-02-SESSION', equipment_code: 'LP-02', alarm_code: 'ECAT-STATE-021', status: 'ANALYZING', risk_level: 'HIGH', created_at: new Date(Date.now() - 3600000).toISOString(), desc: 'EtherCAT Slave PRE-OP 고착' },
-    { session_id: 'FC-11-SESSION', equipment_code: 'FC-11', alarm_code: 'FC-INTERLOCK-03', status: 'CLOSED', risk_level: 'LOW', created_at: new Date(Date.now() - 10800000).toISOString(), desc: '도어 닫힘 상태 불량' }
+    { session_id: 'LP-01-SESSION', equipment_code: 'LP-01', alarm_code: 'LP-CLAMP-014', status: 'ANALYSIS_READY', risk_level: 'LOW', created_at: "2026-05-16T01:18:00Z", desc: 'Clamp 완료 센서 위치 이탈' },
+    { session_id: 'LP-02-SESSION', equipment_code: 'LP-02', alarm_code: 'ECAT-STATE-021', status: 'ANALYZING', risk_level: 'HIGH', created_at: "2026-05-16T00:28:00Z", desc: 'EtherCAT Slave PRE-OP 고착' },
+    { session_id: 'FC-11-SESSION', equipment_code: 'FC-11', alarm_code: 'FC-INTERLOCK-03', status: 'CLOSED', risk_level: 'LOW', created_at: "2026-05-15T22:28:00Z", desc: '도어 닫힘 상태 불량' }
   ],
   required_actions: [
     { action_type: 'APPROVAL_REQUIRED', resource_type: 'REPORT_DRAFT', resource_id: 'RPT-092', title: 'EtherCAT state anomaly requires senior review (Engineer Kim)', severity: 'HIGH' }
   ],
   guardrail_blocks_today: 3
 };
+
+function formatUtcClockTime(value?: string | null) {
+  if (!value) return "--:-- UTC";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--:-- UTC";
+
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${hours}:${minutes} UTC`;
+}
 
 export default function HomePage() {
   const [summary, setSummary] = useState(mockSummary);
@@ -207,7 +217,7 @@ export default function HomePage() {
                         </span>
                         <span className="text-xs text-slate-500 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          {formatUtcClockTime(item.created_at)}
                         </span>
                       </div>
                     </div>

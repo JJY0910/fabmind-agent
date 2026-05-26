@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Search, Filter, History, User, Cpu } from "lucide-react";
 import { fetchAuditEvents } from "@/lib/api";
 import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
+import { AuditEventDetailDrawer, type AuditEventSummary } from "@/components/ui/audit-event-detail-drawer";
 import {
   CodePill,
   DataSourceBanner,
@@ -14,7 +15,7 @@ import {
   TableStateRow,
 } from "@/components/ui/operational";
 
-const fallbackAuditEvents = [
+const fallbackAuditEvents: AuditEventSummary[] = [
   { id: "AE-9001", event_type: "POLICY_BLOCKED", severity: "HIGH", resource_type: "AGENT_RUN", actor: "Engineer Kim", created_at: "2026-05-16T09:45:00Z", payload: '{"request": "unsafe_action", "reason": "SAFETY_BOUNDARY"}' },
   { id: "AE-9002", event_type: "SESSION_CREATED", severity: "INFO", resource_type: "DIAGNOSIS_SESSION", actor: "Engineer Kim", created_at: "2026-05-16T08:30:00Z", payload: '{"equipment": "LP-01", "alarm": "LP-CLAMP-014"}' },
   { id: "AE-9003", event_type: "REPORT_APPROVED", severity: "INFO", resource_type: "REPORT_DRAFT", actor: "Senior Lee", created_at: "2026-05-15T15:20:00Z", payload: '{"decision": "APPROVED", "report_id": "RPT-088"}' },
@@ -41,7 +42,8 @@ function formatTimestamp(value?: string | null) {
 }
 
 export default function AuditConsolePage() {
-  const [auditEvents, setAuditEvents] = useState(fallbackAuditEvents);
+  const [auditEvents, setAuditEvents] = useState<AuditEventSummary[]>(fallbackAuditEvents);
+  const [selectedAuditEvent, setSelectedAuditEvent] = useState<AuditEventSummary | null>(null);
   const [dataMode, setDataMode] = useState<DataMode>("loading");
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +51,7 @@ export default function AuditConsolePage() {
     fetchAuditEvents()
       .then(data => {
         if (data && Array.isArray(data.items)) {
-          setAuditEvents(data.items);
+          setAuditEvents(data.items as AuditEventSummary[]);
           setDataMode(data.items.length > 0 ? "live" : "empty");
           setError(null);
         }
@@ -136,14 +138,15 @@ export default function AuditConsolePage() {
                 <th className="px-6 py-3 font-semibold">Severity</th>
                 <th className="px-6 py-3 font-semibold">Actor</th>
                 <th className="px-6 py-3 font-semibold">Payload Preview</th>
+                <th className="px-6 py-3 font-semibold text-right">Trace</th>
               </tr>
           </OperationalTableHeader>
           <OperationalTableBody>
               {dataMode === "loading" ? (
-                <TableStateRow colSpan={5} title="Loading audit event records..." />
+                <TableStateRow colSpan={6} title="Loading audit event records..." />
               ) : null}
               {dataMode === "empty" ? (
-                <TableStateRow colSpan={5} title="No audit event records are currently available." />
+                <TableStateRow colSpan={6} title="No audit event records are currently available." />
               ) : null}
               {dataMode !== "loading" ? auditEvents.map((event) => (
                 <tr key={event.id} className="hover:bg-[#111d33]/50 transition-colors">
@@ -181,11 +184,27 @@ export default function AuditConsolePage() {
                       {payloadPreview(event.payload)}
                     </code>
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      aria-label={`Inspect audit event ${event.id ?? "detail"}`}
+                      className="rounded border border-[#1a2c4d] bg-[#050b14] px-3 py-1.5 text-xs font-semibold text-[#00e5ff] transition-colors hover:border-[#00e5ff]/40 hover:bg-[#00e5ff]/10 focus:outline-none focus:ring-2 focus:ring-[#00e5ff]/40"
+                      type="button"
+                      onClick={() => setSelectedAuditEvent(event)}
+                    >
+                      Inspect
+                    </button>
+                  </td>
                 </tr>
               )) : null}
           </OperationalTableBody>
         </OperationalTable>
       </Card>
+
+      <AuditEventDetailDrawer
+        auditEvent={selectedAuditEvent}
+        dataMode={dataMode}
+        onClose={() => setSelectedAuditEvent(null)}
+      />
     </div>
   );
 }
