@@ -6,6 +6,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 WEB_SRC = REPO_ROOT / "apps" / "web" / "src"
+HOME_PAGE = WEB_SRC / "app" / "page.tsx"
 AUDIT_EVENTS_PAGE = WEB_SRC / "app" / "audit-events" / "page.tsx"
 AUDIT_DRAWER = WEB_SRC / "components" / "ui" / "audit-event-detail-drawer.tsx"
 INCIDENT_DRAWER = WEB_SRC / "components" / "ui" / "incident-detail-drawer.tsx"
@@ -127,3 +128,11 @@ def test_existing_fallback_auth_and_prior_ui_guards_remain_visible() -> None:
     assert "export function ChecklistRunDetailDrawer" in read(CHECKLIST_DRAWER)
     assert "export function ApprovalDetailDrawer" in read(APPROVAL_DRAWER)
     assert "export function ReportDraftContextCard" in read(REPORT_CONTEXT_CARD)
+
+
+def test_dashboard_navigation_start_page_uses_stable_time_rendering() -> None:
+    page = read(HOME_PAGE)
+
+    assert "Date.now()" not in page
+    assert "toLocaleTimeString" not in page
+    assert "formatUtcClockTime(item.created_at)" in page
