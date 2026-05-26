@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { WorkflowStepper } from "@/components/ui/WorkflowStepper";
+import { ReportDraftContextCard } from "@/components/ui/report-draft-context-card";
 
 const referenceReportDraft = {
   id: "RPT-LP-01",
@@ -48,6 +49,10 @@ function formatTimestamp(value?: string | null) {
 
 function hasApprovalAuthority(user: AuthUser | null) {
   return user?.role === "SENIOR_ENGINEER" || user?.role === "ADMIN";
+}
+
+function formatUserSession(user: AuthUser) {
+  return `${user.username} (${user.role.replaceAll("_", " ")})`;
 }
 
 export default function ReportDraftPage() {
@@ -145,8 +150,7 @@ export default function ReportDraftPage() {
           <User className="w-3.5 h-3.5" />
           {currentUser ? (
             <span>
-              Signed in as <span className="text-slate-300">{currentUser.display_name ?? currentUser.username}</span>
-              <span className="font-mono text-[#00e5ff]"> ({currentUser.role})</span>
+              Signed in as <span className="text-slate-300">{formatUserSession(currentUser)}</span>
             </span>
           ) : (
             <span>Approval permissions unavailable</span>
@@ -205,6 +209,8 @@ export default function ReportDraftPage() {
 
         {/* Left Column (Metadata & Context) */}
         <div className="space-y-6 lg:col-span-1">
+          <ReportDraftContextCard report={data} dataMode={dataMode} />
+
           <Card>
             <CardHeader className="pb-3 border-b border-[#1a2c4d]">
               <CardTitle className="text-sm text-white flex items-center gap-2">
