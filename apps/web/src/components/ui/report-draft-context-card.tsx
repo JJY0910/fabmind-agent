@@ -1,7 +1,13 @@
 "use client";
 
 import { Clock, FileText, Link2, ShieldCheck } from "lucide-react";
-import { CodePill, StatusBadge } from "./operational";
+import { StatusBadge } from "./operational";
+import {
+  WorkflowTraceList,
+  checklistRunTraceHref,
+  diagnosisSessionTraceHref,
+  type WorkflowTraceReference,
+} from "./workflow-trace";
 
 export type ReportDraftContext = {
   id?: string | null;
@@ -33,6 +39,31 @@ export function ReportDraftContextCard({
   const status = report.status ?? "UNKNOWN";
   const sourceLabel = dataMode === "live" ? "Live API data is active" : dataMode === "reference" ? "Fallback data is active" : "Current payload state";
   const approvals = report.approvals ?? [];
+  const primaryTraceReferences: WorkflowTraceReference[] = [
+    { label: "Report Draft", value: reportId, note: "Current report draft record", tone: "amber" },
+    {
+      label: "Diagnosis Session",
+      value: report.diagnosis_session_id,
+      href: diagnosisSessionTraceHref(report.diagnosis_session_id),
+      note: report.diagnosis_session_id ? "Read-only detail route available" : "No diagnosis session in current payload",
+    },
+    {
+      label: "Checklist Run",
+      value: report.checklist_run_id,
+      href: checklistRunTraceHref(report.checklist_run_id),
+      note: report.checklist_run_id ? "Read-only detail route available" : "No linked checklist in current payload",
+    },
+    { label: "Agent Run", value: report.agent_run_id, note: "No target-specific route is currently available", tone: "slate" },
+  ];
+  const coverageReferences: WorkflowTraceReference[] = [
+    { label: "Incident", value: report.incident_id, note: "No target-specific incident route is currently available", tone: "slate" },
+    {
+      label: "Equipment",
+      value: report.equipment_code ?? report.equipment_id,
+      note: "Equipment registry is list-based in the current route set",
+      tone: "slate",
+    },
+  ];
 
   return (
     <section className="rounded-lg border border-[#1a2c4d] bg-[#050b14] p-4">
@@ -49,16 +80,8 @@ export function ReportDraftContextCard({
         <StatusBadge status={status} />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <CodePill tone="amber">{reportId}</CodePill>
-        <CodePill>{report.checklist_run_id ?? "No checklist link in payload"}</CodePill>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-        <ContextCell label="Diagnosis Session" value={report.diagnosis_session_id ?? "No diagnosis session in current payload"} />
-        <ContextCell label="Agent Run" value={report.agent_run_id ?? "No agent run in current payload"} />
-        <ContextCell label="Checklist Run" value={report.checklist_run_id ?? "No linked checklist in current payload"} />
-        <ContextCell label="Created By" value={report.created_by_user_id ?? "Creator not included in current payload"} />
+      <div className="mt-4">
+        <WorkflowTraceList references={primaryTraceReferences} />
       </div>
 
       <div className="mt-4 rounded border border-[#1a2c4d] bg-[#0a1322] p-3">
@@ -66,10 +89,12 @@ export function ReportDraftContextCard({
           <Link2 className="h-4 w-4" />
           Linked Incident / Equipment Coverage
         </div>
-        <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-          <ContextCell label="Incident" value={report.incident_id ?? "No linked incident in current read-only payload"} />
-          <ContextCell label="Equipment" value={report.equipment_code ?? report.equipment_id ?? "No equipment detail in current report payload"} />
-        </div>
+        <WorkflowTraceList references={coverageReferences} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+        <ContextCell label="Created By" value={report.created_by_user_id ?? "Creator not included in current payload"} />
+        <ContextCell label="Approval Records" value={`${approvals.length} approval record${approvals.length === 1 ? "" : "s"} in payload`} />
       </div>
 
       <div className="mt-4 rounded border border-[#1a2c4d] bg-[#0a1322] p-3">
@@ -80,7 +105,6 @@ export function ReportDraftContextCard({
         <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
           <ContextCell label="Created" value={formatTimestamp(report.created_at)} />
           <ContextCell label="Last Updated" value={formatTimestamp(report.updated_at)} />
-          <ContextCell label="Approval Records" value={`${approvals.length} approval record${approvals.length === 1 ? "" : "s"} in payload`} />
           <ContextCell label="Source" value={sourceLabel} />
         </div>
       </div>

@@ -3,6 +3,13 @@
 import { useEffect, type ReactNode } from "react";
 import { Clock, FileText, Link2, ShieldCheck, UserRound, X } from "lucide-react";
 import { CodePill, StatusBadge } from "./operational";
+import {
+  WorkflowTraceList,
+  checklistRunTraceHref,
+  diagnosisSessionTraceHref,
+  reportDraftTraceHref,
+  type WorkflowTraceReference,
+} from "./workflow-trace";
 
 export type ApprovalQueueItemSummary = {
   id?: string | null;
@@ -60,6 +67,30 @@ export function ApprovalDetailDrawer({
   const status = approval.approval_status ?? approval.status ?? "UNKNOWN";
   const equipmentCode = approval.equipment_code ?? approval.equipment_id ?? "Not included in current payload";
   const sourceLabel = dataMode === "live" ? "Live API data is active" : dataMode === "reference" ? "Fallback data is active" : "Current payload state";
+  const workflowTraceReferences: WorkflowTraceReference[] = [
+    {
+      label: "Report Draft",
+      value: approval.report_draft_id,
+      href: reportDraftTraceHref(approval.report_draft_id),
+      note: approval.report_draft_id ? "Read-only report detail route available" : "No linked report in current payload",
+      tone: "amber",
+    },
+    {
+      label: "Diagnosis Session",
+      value: approval.diagnosis_session_id,
+      href: diagnosisSessionTraceHref(approval.diagnosis_session_id),
+      note: approval.diagnosis_session_id ? "Read-only diagnosis route available" : "No linked workflow record in current payload",
+    },
+    {
+      label: "Checklist Run",
+      value: approval.checklist_run_id,
+      href: checklistRunTraceHref(approval.checklist_run_id),
+      note: approval.checklist_run_id ? "Read-only checklist route available" : "No linked checklist in current payload",
+    },
+    { label: "Incident", value: approval.incident_id, note: "No target-specific incident route is currently available", tone: "slate" },
+    { label: "Approval Record", value: approvalId, note: "Approval queue is list-based in the current route set", tone: "slate" },
+    { label: "Audit Event", value: approval.audit_event_id, note: "Audit console is list-based in the current route set", tone: "slate" },
+  ];
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/50">
@@ -120,14 +151,7 @@ export function ApprovalDetailDrawer({
 
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">
             <SectionTitle icon={<Link2 className="h-4 w-4" />} title="Report / Workflow Context" />
-            <DetailGrid
-              rows={[
-                ["Diagnosis Session", approval.diagnosis_session_id ?? "No linked workflow record in current read-only payload"],
-                ["Incident", approval.incident_id ?? "No linked incident in current read-only payload"],
-                ["Checklist Run", approval.checklist_run_id ?? "No linked checklist in current read-only payload"],
-                ["Audit Event", approval.audit_event_id ?? "No audit event reference in current read-only payload"],
-              ]}
-            />
+            <WorkflowTraceList references={workflowTraceReferences} />
           </section>
 
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">

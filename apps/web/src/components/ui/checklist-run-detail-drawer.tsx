@@ -3,6 +3,12 @@
 import { useEffect, type ReactNode } from "react";
 import { CheckCircle2, Clock, Link2, ShieldCheck, X } from "lucide-react";
 import { CodePill, StatusBadge } from "./operational";
+import {
+  WorkflowTraceList,
+  diagnosisSessionTraceHref,
+  reportDraftTraceHref,
+  type WorkflowTraceReference,
+} from "./workflow-trace";
 
 export type ChecklistRunSummary = {
   id?: string | null;
@@ -60,6 +66,35 @@ export function ChecklistRunDetailDrawer({
   const reportDraftId = checklistRun.linked_report_draft_id ?? checklistRun.report_draft_id;
   const sourceLabel = dataMode === "live" ? "Live API data is active" : dataMode === "reference" ? "Fallback data is active" : "Current payload state";
   const steps = deriveSteps(checklistRun.status, completedItems, totalItems, failedItems);
+  const contextTraceReferences: WorkflowTraceReference[] = [
+    {
+      label: "Diagnosis Session",
+      value: checklistRun.diagnosis_session_id,
+      href: diagnosisSessionTraceHref(checklistRun.diagnosis_session_id),
+      note: checklistRun.diagnosis_session_id ? "Read-only diagnosis route available" : "No linked session in current payload",
+    },
+    {
+      label: "Equipment",
+      value: checklistRun.equipment_code ?? checklistRun.equipment_id,
+      note: "Equipment registry is list-based in the current route set",
+      tone: "slate",
+    },
+  ];
+  const workflowTraceReferences: WorkflowTraceReference[] = [
+    {
+      label: "Report Draft",
+      value: reportDraftId,
+      href: reportDraftTraceHref(reportDraftId),
+      note: reportDraftId ? "Read-only report route available" : "No linked report in current payload",
+      tone: "amber",
+    },
+    {
+      label: "Audit Event",
+      value: checklistRun.audit_event_id,
+      note: "Audit console is list-based in the current route set",
+      tone: "slate",
+    },
+  ];
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/50">
@@ -112,10 +147,9 @@ export function ChecklistRunDetailDrawer({
 
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">
             <SectionTitle title="Equipment / Session Context" />
+            <WorkflowTraceList references={contextTraceReferences} />
             <DetailGrid
               rows={[
-                ["Equipment", checklistRun.equipment_code ?? checklistRun.equipment_id ?? "Not included in current payload"],
-                ["Diagnosis Session", checklistRun.diagnosis_session_id ?? "No linked session in current payload"],
                 ["Pending Items", String(pendingItems)],
                 ["Source", sourceLabel],
               ]}
@@ -163,11 +197,10 @@ export function ChecklistRunDetailDrawer({
 
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">
             <SectionTitle icon={<Link2 className="h-4 w-4" />} title="Related Workflow" />
+            <WorkflowTraceList references={workflowTraceReferences} />
             <DetailGrid
               rows={[
-                ["Report Draft", reportDraftId ?? "No linked report in current read-only payload"],
                 ["Approval Status", checklistRun.approval_status ?? "No approval status in current read-only payload"],
-                ["Audit Event", checklistRun.audit_event_id ?? "No audit event reference in current read-only payload"],
               ]}
             />
           </section>

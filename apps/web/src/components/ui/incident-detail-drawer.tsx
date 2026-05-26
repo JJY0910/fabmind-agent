@@ -3,6 +3,13 @@
 import { useEffect, type ReactNode } from "react";
 import { X, Clock, Link2, ShieldCheck } from "lucide-react";
 import { CodePill, SeverityBadge, StatusBadge } from "./operational";
+import {
+  WorkflowTraceList,
+  checklistRunTraceHref,
+  diagnosisSessionTraceHref,
+  reportDraftTraceHref,
+  type WorkflowTraceReference,
+} from "./workflow-trace";
 
 export type IncidentSummary = {
   id?: string | null;
@@ -66,6 +73,41 @@ export function IncidentDetailDrawer({
   const reportDraftId = incident.linked_report_draft_id ?? incident.report_draft_id;
   const diagnosisSessionId = incident.linked_diagnosis_session_id ?? incident.diagnosis_session_id;
   const sourceLabel = dataMode === "live" ? "Live API data is active" : dataMode === "reference" ? "Fallback data is active" : "Current payload state";
+  const equipmentTraceReferences: WorkflowTraceReference[] = [
+    {
+      label: "Equipment",
+      value: equipmentCode,
+      note: "Equipment registry is list-based in the current route set",
+      tone: "slate",
+    },
+    {
+      label: "Diagnosis Session",
+      value: diagnosisSessionId,
+      href: diagnosisSessionTraceHref(diagnosisSessionId),
+      note: diagnosisSessionId ? "Read-only diagnosis route available" : "No linked session in current payload",
+    },
+  ];
+  const workflowTraceReferences: WorkflowTraceReference[] = [
+    {
+      label: "Checklist Run",
+      value: checklistRunId,
+      href: checklistRunTraceHref(checklistRunId),
+      note: checklistRunId ? "Read-only checklist route available" : "No linked checklist in current payload",
+    },
+    {
+      label: "Report Draft",
+      value: reportDraftId,
+      href: reportDraftTraceHref(reportDraftId),
+      note: reportDraftId ? "Read-only report route available" : "No linked report draft in current payload",
+      tone: "amber",
+    },
+    {
+      label: "Audit Event",
+      value: incident.audit_event_id,
+      note: "Audit console is list-based in the current route set",
+      tone: "slate",
+    },
+  ];
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/50">
@@ -117,12 +159,11 @@ export function IncidentDetailDrawer({
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">
             <SectionTitle title="Equipment Context" />
             <div className="mt-3 space-y-3">
-              <CodePill>{equipmentCode}</CodePill>
+              <WorkflowTraceList references={equipmentTraceReferences} className="mt-0" />
               <DetailGrid
                 rows={[
                   ["Equipment ID", incident.equipment_id ?? "Not included in current payload"],
                   ["Area / Line / Cell", [incident.area, incident.line, incident.cell].filter(Boolean).join(" / ") || "Not included in current payload"],
-                  ["Diagnosis Session", diagnosisSessionId ?? "No linked session in current payload"],
                 ]}
               />
             </div>
@@ -151,12 +192,10 @@ export function IncidentDetailDrawer({
 
           <section className="rounded-lg border border-[#1a2c4d] bg-[#0a1322] p-4">
             <SectionTitle icon={<Link2 className="h-4 w-4" />} title="Related Workflow" />
+            <WorkflowTraceList references={workflowTraceReferences} />
             <DetailGrid
               rows={[
-                ["Checklist Run", checklistRunId ?? "No linked checklist in current payload"],
-                ["Report Draft", reportDraftId ?? "No linked report draft in current payload"],
                 ["Approval Status", incident.approval_status ?? "No approval status in current payload"],
-                ["Audit Event", incident.audit_event_id ?? "No audit event reference in current payload"],
               ]}
             />
           </section>
